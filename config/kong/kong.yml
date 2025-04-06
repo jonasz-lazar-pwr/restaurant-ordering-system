@@ -1,0 +1,48 @@
+_format_version: "3.0"
+
+services:
+  - name: auth-service
+    url: http://auth-service:8002
+
+    routes:
+      - name: register-route
+        paths:
+          - /auth/register
+        strip_path: false
+
+      - name: login-route
+        paths:
+          - /auth/jwt/login
+        strip_path: false
+
+      - name: logout-route
+        paths:
+          - /auth/jwt/logout
+        strip_path: false
+        plugins:
+          - name: jwt
+            config:
+              claims_to_verify: ["exp"]
+              key_claim_name: "iss"
+              secret_is_base64: false
+              run_on_preflight: false
+
+      - name: users-me-route
+        paths:
+          - /users/me
+        strip_path: false
+        plugins:
+          - name: jwt
+            config:
+              claims_to_verify: ["exp"]
+              key_claim_name: "iss"
+              secret_is_base64: false
+              run_on_preflight: false
+
+consumers:
+  - username: "auth-consumer"
+    custom_id: "auth-service"
+    jwt_secrets:
+      - algorithm: HS256
+        key: "auth-service"       # to musi być identyczne jak `iss` w JWT
+        secret: "4lm*@ww6oo^dm1+h#nti(!hm0ujgwgtuyxs05_r(051s&ozg=9"

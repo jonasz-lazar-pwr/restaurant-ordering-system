@@ -1,0 +1,51 @@
+
+services:
+  auth-service-database:
+    image: postgres:15-alpine
+    container_name: auth-service-database
+    environment:
+      POSTGRES_DB: "${AUTH_SERVICE_DB_NAME}"
+      POSTGRES_USER: "${AUTH_SERVICE_DB_USER}"
+      POSTGRES_PASSWORD: "${AUTH_SERVICE_DB_PASSWORD}"
+    volumes:
+      - auth_service_database_data:/var/lib/postgresql/data
+    ports:
+      - "${AUTH_SERVICE_DB_PORT}:${AUTH_SERVICE_DB_PORT}"
+    env_file:
+      - .env
+
+  auth-service:
+    image: auth-service:latest
+    container_name: auth-service
+    build:
+      context: ../auth-service
+      dockerfile: Dockerfile
+    command: >
+      uvicorn api.main:app --host 0.0.0.0 --port ${AUTH_SERVICE_PORT}
+    volumes:
+      - ../auth-service:/app
+    ports:
+      - "${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}"
+    env_file:
+      - .env
+    depends_on:
+      - auth-service-database
+
+  kong:
+    image: kong:3.4
+    container_name: api-gateway-kong
+    restart: unless-stopped
+    ports:
+      - "8000:8000"     # Proxy (HTTP)
+      - "8001:8001"     # Admin API (HTTP)
+      - "8443:8443"     # Proxy (HTTPS)
+      - "8444:8444"     # Admin API (HTTPS)
+    environment:
+      KONG_DATABASE: "off" # tryb bez bazy danych
+      KONG_DECLARATIVE_CONFIG: /kong/kong.yml
+      KONG_LOG_LEVEL: debug
+    volumes:
+      - ./kong/kong.yml:/kong/kong.yml
+
+volumes:
+  auth_service_database_data:

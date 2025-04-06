@@ -1,0 +1,2 @@
+docker-compose up --build -d
+docker-compose exec auth-service sh -c "PYTHONPATH=/app python api/db/init_db.py"
