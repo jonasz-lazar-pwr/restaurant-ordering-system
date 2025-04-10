@@ -294,3 +294,6 @@ cmake-build-*/
 .idea_modules/
 atlassian-ide-plugin.xml
 .idea/replstate.xml
+
+# Structurizr local cache and settings
+.structurizr/

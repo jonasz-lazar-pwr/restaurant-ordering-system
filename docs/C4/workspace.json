@@ -1,0 +1,682 @@
+{
+  "configuration" : { },
+  "description" : "Model C4 dla Systemu Zamówień",
+  "documentation" : { },
+  "id" : 1,
+  "lastModifiedDate" : "2025-04-10T16:09:47Z",
+  "model" : {
+    "people" : [ {
+      "description" : "Przegląda menu, składa i opłaca zamówienia, obsługuje płatności, przyjmuje zamówienia i zarządza systemem",
+      "id" : "1",
+      "location" : "Unspecified",
+      "name" : "Użytkownik",
+      "properties" : {
+        "structurizr.dsl.identifier" : "user"
+      },
+      "relationships" : [ {
+        "description" : "Używa systemu do składania zamówień, zarządzania, etc.",
+        "destinationId" : "5",
+        "id" : "49",
+        "sourceId" : "1",
+        "tags" : "Relationship"
+      }, {
+        "description" : "Wysyła żądania API (REST)",
+        "destinationId" : "6",
+        "id" : "50",
+        "sourceId" : "1",
+        "tags" : "Relationship"
+      } ],
+      "tags" : "Element,Person"
+    } ],
+    "softwareSystems" : [ {
+      "description" : "Wysyła powiadomienia do klientów",
+      "documentation" : { },
+      "id" : "2",
+      "location" : "Unspecified",
+      "name" : "Usługa SMS",
+      "properties" : {
+        "structurizr.dsl.identifier" : "sms_gateway"
+      },
+      "tags" : "Element,Software System"
+    }, {
+      "description" : "Wysyła rachunki elektroniczne do klientów",
+      "documentation" : { },
+      "id" : "3",
+      "location" : "Unspecified",
+      "name" : "Usługa e-mail",
+      "properties" : {
+        "structurizr.dsl.identifier" : "email_gateway"
+      },
+      "tags" : "Element,Software System"
+    }, {
+      "description" : "Obsługuje płatności BLIK, PayU, itp.",
+      "documentation" : { },
+      "id" : "4",
+      "location" : "Unspecified",
+      "name" : "Bramka płatności online",
+      "properties" : {
+        "structurizr.dsl.identifier" : "payment_gateway"
+      },
+      "tags" : "Element,Software System"
+    }, {
+      "containers" : [ {
+        "description" : "Routing żądań do mikroserwisów, uwierzytelnianie, autoryzacja",
+        "documentation" : { },
+        "id" : "6",
+        "name" : "API Gateway",
+        "properties" : {
+          "structurizr.dsl.identifier" : "system.gateway"
+        },
+        "relationships" : [ {
+          "description" : "Rejestracja, logowanie, JWT",
+          "destinationId" : "7",
+          "id" : "28",
+          "sourceId" : "6",
+          "tags" : "Relationship"
+        }, {
+          "description" : "Zarządzanie zamówieniami",
+          "destinationId" : "17",
+          "id" : "29",
+          "sourceId" : "6",
+          "tags" : "Relationship"
+        }, {
+          "description" : "Zamówienia kuchenne",
+          "destinationId" : "18",
+          "id" : "30",
+          "sourceId" : "6",
+          "tags" : "Relationship"
+        }, {
+          "description" : "Rozpoczyna płatność",
+          "destinationId" : "19",
+          "id" : "31",
+          "sourceId" : "6",
+          "tags" : "Relationship"
+        }, {
+          "description" : "Przekazuje żądania HTTP do obsługi przez FastAPI Users",
+          "destinationId" : "8",
+          "id" : "51",
+          "sourceId" : "6",
+          "tags" : "Relationship"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Kong"
+      }, {
+        "components" : [ {
+          "description" : "Obsługuje żądania HTTP dla /auth/* i /users/* używając fastapi-users",
+          "documentation" : { },
+          "id" : "8",
+          "name" : "FastAPI Users Routers",
+          "properties" : {
+            "structurizr.dsl.identifier" : "system.auth.routers"
+          },
+          "relationships" : [ {
+            "description" : "Używa do rejestracji, pobierania/zarządzania użytkownikami",
+            "destinationId" : "11",
+            "id" : "13",
+            "sourceId" : "8",
+            "tags" : "Relationship",
+            "technology" : "FastAPI dependency injection"
+          }, {
+            "description" : "Używa do logowania, weryfikacji tokenów",
+            "destinationId" : "9",
+            "id" : "14",
+            "sourceId" : "8",
+            "tags" : "Relationship",
+            "technology" : "FastAPI dependency injection"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "FastAPI Users"
+        }, {
+          "description" : "Koordynuje proces uwierzytelniania JWT",
+          "documentation" : { },
+          "id" : "9",
+          "name" : "Authentication Backend",
+          "properties" : {
+            "structurizr.dsl.identifier" : "system.auth.authbackend"
+          },
+          "relationships" : [ {
+            "description" : "Deleguje tworzenie/odczyt tokenu",
+            "destinationId" : "10",
+            "id" : "15",
+            "sourceId" : "9",
+            "tags" : "Relationship",
+            "technology" : "Python call"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "FastAPI Users"
+        }, {
+          "description" : "Generuje i waliduje tokeny JWT z rolą użytkownika",
+          "documentation" : { },
+          "id" : "10",
+          "name" : "Custom JWT Strategy",
+          "properties" : {
+            "structurizr.dsl.identifier" : "system.auth.jwtstrategy"
+          },
+          "tags" : "Element,Component",
+          "technology" : "Python / python-jose"
+        }, {
+          "description" : "Zarządza logiką tworzenia, aktualizacji i pobierania użytkowników",
+          "documentation" : { },
+          "id" : "11",
+          "name" : "User Manager",
+          "properties" : {
+            "structurizr.dsl.identifier" : "system.auth.usermanager"
+          },
+          "relationships" : [ {
+            "description" : "Deleguje operacje bazodanowe na użytkownikach",
+            "destinationId" : "12",
+            "id" : "16",
+            "sourceId" : "11",
+            "tags" : "Relationship",
+            "technology" : "Python call"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "FastAPI Users / Python"
+        }, {
+          "description" : "Adapter mapujący operacje User Managera na zapytania SQLAlchemy",
+          "documentation" : { },
+          "id" : "12",
+          "name" : "SQLAlchemy User DB Adapter",
+          "properties" : {
+            "structurizr.dsl.identifier" : "system.auth.dbadapter"
+          },
+          "relationships" : [ {
+            "description" : "Wykonuje operacje CRUD na tabeli 'users'",
+            "destinationId" : "22",
+            "id" : "42",
+            "sourceId" : "12",
+            "tags" : "Relationship",
+            "technology" : "SQLAlchemy"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "FastAPI Users / SQLAlchemy"
+        } ],
+        "description" : "Uwierzytelnianie, logowanie, role",
+        "documentation" : { },
+        "id" : "7",
+        "name" : "Auth Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "system.auth"
+        },
+        "relationships" : [ {
+          "description" : "Czyta/Zapisuje dane uwierzytelniające",
+          "destinationId" : "22",
+          "id" : "36",
+          "sourceId" : "7",
+          "tags" : "Relationship"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "FastAPI"
+      }, {
+        "description" : "Zamówienia, sesje stolików, statusy",
+        "documentation" : { },
+        "id" : "17",
+        "name" : "Order Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "system.order"
+        },
+        "relationships" : [ {
+          "description" : "Informuje o przyjęciu zamówienia",
+          "destinationId" : "20",
+          "id" : "32",
+          "sourceId" : "17",
+          "tags" : "Relationship"
+        }, {
+          "description" : "Czyta/Zapisuje dane zamówień",
+          "destinationId" : "23",
+          "id" : "37",
+          "sourceId" : "17",
+          "tags" : "Relationship"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "FastAPI"
+      }, {
+        "description" : "Obsługa zamówień kuchennych",
+        "documentation" : { },
+        "id" : "18",
+        "name" : "Kitchen Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "system.kitchen"
+        },
+        "relationships" : [ {
+          "description" : "Informuje o gotowym daniu",
+          "destinationId" : "20",
+          "id" : "33",
+          "sourceId" : "18",
+          "tags" : "Relationship"
+        }, {
+          "description" : "Czyta/Zapisuje statusy zamówień kuchennych",
+          "destinationId" : "24",
+          "id" : "38",
+          "sourceId" : "18",
+          "tags" : "Relationship"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "FastAPI"
+      }, {
+        "description" : "Integracja z bramkami płatności",
+        "documentation" : { },
+        "id" : "19",
+        "name" : "Payment Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "system.payment"
+        },
+        "relationships" : [ {
+          "description" : "Potwierdza płatność",
+          "destinationId" : "20",
+          "id" : "34",
+          "sourceId" : "19",
+          "tags" : "Relationship"
+        }, {
+          "description" : "Wysyła rachunek po płatności",
+          "destinationId" : "21",
+          "id" : "35",
+          "sourceId" : "19",
+          "tags" : "Relationship"
+        }, {
+          "description" : "Czyta/Zapisuje logi płatności",
+          "destinationId" : "25",
+          "id" : "41",
+          "sourceId" : "19",
+          "tags" : "Relationship"
+        }, {
+          "description" : "Wysyła dane do płatności",
+          "destinationId" : "4",
+          "id" : "47",
+          "sourceId" : "19",
+          "tags" : "Relationship"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "FastAPI"
+      }, {
+        "description" : "Wysyłanie powiadomień SMS",
+        "documentation" : { },
+        "id" : "20",
+        "name" : "SMS Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "system.sms"
+        },
+        "relationships" : [ {
+          "description" : "Czyta/Zapisuje logi wysłanych SMS-ów",
+          "destinationId" : "26",
+          "id" : "39",
+          "sourceId" : "20",
+          "tags" : "Relationship"
+        }, {
+          "description" : "Wysyła dane do powiadomień",
+          "destinationId" : "2",
+          "id" : "43",
+          "sourceId" : "20",
+          "tags" : "Relationship"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "FastAPI"
+      }, {
+        "description" : "Wysyłanie rachunków i e-maili",
+        "documentation" : { },
+        "id" : "21",
+        "name" : "E-mail Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "system.email"
+        },
+        "relationships" : [ {
+          "description" : "Czyta/Zapisuje logi wysłanych e-maili",
+          "destinationId" : "27",
+          "id" : "40",
+          "sourceId" : "21",
+          "tags" : "Relationship"
+        }, {
+          "description" : "Wysyła dane do rachunków",
+          "destinationId" : "3",
+          "id" : "45",
+          "sourceId" : "21",
+          "tags" : "Relationship"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "FastAPI"
+      }, {
+        "description" : "Baza danych użytkowników i ról",
+        "documentation" : { },
+        "id" : "22",
+        "name" : "Auth DB",
+        "properties" : {
+          "structurizr.dsl.identifier" : "system.db_auth"
+        },
+        "tags" : "Element,Container,Database",
+        "technology" : "PostgreSQL"
+      }, {
+        "description" : "Baza danych zamówień",
+        "documentation" : { },
+        "id" : "23",
+        "name" : "Orders DB",
+        "properties" : {
+          "structurizr.dsl.identifier" : "system.db_orders"
+        },
+        "tags" : "Element,Container,Database",
+        "technology" : "PostgreSQL"
+      }, {
+        "description" : "Baza danych kuchni",
+        "documentation" : { },
+        "id" : "24",
+        "name" : "Kitchen DB",
+        "properties" : {
+          "structurizr.dsl.identifier" : "system.db_kitchen"
+        },
+        "tags" : "Element,Container,Database",
+        "technology" : "PostgreSQL"
+      }, {
+        "description" : "Logi płatności",
+        "documentation" : { },
+        "id" : "25",
+        "name" : "Payment DB",
+        "properties" : {
+          "structurizr.dsl.identifier" : "system.db_payment"
+        },
+        "tags" : "Element,Container,Database",
+        "technology" : "PostgreSQL"
+      }, {
+        "description" : "Logi wysłanych SMS-ów",
+        "documentation" : { },
+        "id" : "26",
+        "name" : "SMS DB",
+        "properties" : {
+          "structurizr.dsl.identifier" : "system.db_sms"
+        },
+        "tags" : "Element,Container,Database",
+        "technology" : "PostgreSQL"
+      }, {
+        "description" : "Logi wysłanych e-maili",
+        "documentation" : { },
+        "id" : "27",
+        "name" : "Email DB",
+        "properties" : {
+          "structurizr.dsl.identifier" : "system.db_email"
+        },
+        "tags" : "Element,Container,Database",
+        "technology" : "PostgreSQL"
+      } ],
+      "description" : "Pozwala klientom zamawiać dania, a obsłudze je realizować",
+      "documentation" : { },
+      "id" : "5",
+      "location" : "Unspecified",
+      "name" : "System Zamówień w Restauracji",
+      "properties" : {
+        "structurizr.dsl.identifier" : "system"
+      },
+      "relationships" : [ {
+        "description" : "Wysyła dane do powiadomień",
+        "destinationId" : "2",
+        "id" : "44",
+        "linkedRelationshipId" : "43",
+        "sourceId" : "5"
+      }, {
+        "description" : "Wysyła dane do rachunków",
+        "destinationId" : "3",
+        "id" : "46",
+        "linkedRelationshipId" : "45",
+        "sourceId" : "5"
+      }, {
+        "description" : "Wysyła dane do płatności",
+        "destinationId" : "4",
+        "id" : "48",
+        "linkedRelationshipId" : "47",
+        "sourceId" : "5"
+      } ],
+      "tags" : "Element,Software System"
+    } ]
+  },
+  "name" : "System Zamówień w Restauracji",
+  "properties" : {
+    "structurizr.dsl" : "Ly8gd29ya3NwYWNlLmRzbAp3b3Jrc3BhY2UgIlN5c3RlbSBaYW3Ds3dpZcWEIHcgUmVzdGF1cmFjamkiICJNb2RlbCBDNCBkbGEgU3lzdGVtdSBaYW3Ds3dpZcWEIiB7CgogICAgIWlkZW50aWZpZXJzIGhpZXJhcmNoaWNhbAoKICAgIC8vIG1vZGVsLmRzbAogICAgbW9kZWwgewogICAgICAgIC8vIFXFvHl0a293bmlrIHN5c3RlbXUKICAgICAgICB1c2VyID0gcGVyc29uICJVxbx5dGtvd25payIgIlByemVnbMSFZGEgbWVudSwgc2vFgmFkYSBpIG9wxYJhY2EgemFtw7N3aWVuaWEsIG9ic8WCdWd1amUgcMWCYXRub8WbY2ksIHByenlqbXVqZSB6YW3Ds3dpZW5pYSBpIHphcnrEhWR6YSBzeXN0ZW1lbSIKICAgIAogICAgICAgIC8vIFpld27EmXRyem5lIHN5c3RlbXkKICAgICAgICBzbXNfZ2F0ZXdheSA9IHNvZnR3YXJlU3lzdGVtICJVc8WCdWdhIFNNUyIgIld5c3nFgmEgcG93aWFkb21pZW5pYSBkbyBrbGllbnTDs3ciCiAgICAgICAgZW1haWxfZ2F0ZXdheSA9IHNvZnR3YXJlU3lzdGVtICJVc8WCdWdhIGUtbWFpbCIgIld5c3nFgmEgcmFjaHVua2kgZWxla3Ryb25pY3puZSBkbyBrbGllbnTDs3ciCiAgICAgICAgcGF5bWVudF9nYXRld2F5ID0gc29mdHdhcmVTeXN0ZW0gIkJyYW1rYSBwxYJhdG5vxZtjaSBvbmxpbmUiICJPYnPFgnVndWplIHDFgmF0bm/Fm2NpIEJMSUssIFBheVUsIGl0cC4iCiAgICAKICAgICAgICAvLyBHxYLDs3dueSBzeXN0ZW0KICAgICAgICBzeXN0ZW0gPSBzb2Z0d2FyZVN5c3RlbSAiU3lzdGVtIFphbcOzd2llxYQgdyBSZXN0YXVyYWNqaSIgIlBvendhbGEga2xpZW50b20gemFtYXdpYcSHIGRhbmlhLCBhIG9ic8WCdWR6ZSBqZSByZWFsaXpvd2HEhyIgewogICAgCiAgICAgICAgICAgIC8vIC0tLSBLb250ZW5lcnkgQXBsaWthY3lqbmUgLS0tCiAgICAgICAgICAgIGdhdGV3YXkgPSBjb250YWluZXIgIkFQSSBHYXRld2F5IiAiUm91dGluZyDFvMSFZGHFhCBkbyBtaWtyb3Nlcndpc8OzdywgdXdpZXJ6eXRlbG5pYW5pZSwgYXV0b3J5emFjamEiICJLb25nIgogICAgCiAgICAgICAgICAgIC8vIC0tLSBLb250ZW5lciBBdXRoIFNlcnZpY2UgeiBLb21wb25lbnRhbWkgKFBvemlvbSAzKSAtLS0KICAgICAgICAgICAgYXV0aCA9IGNvbnRhaW5lciAiQXV0aCBTZXJ2aWNlIiAiVXdpZXJ6eXRlbG5pYW5pZSwgbG9nb3dhbmllLCByb2xlIiAiRmFzdEFQSSIgewogICAgICAgICAgICAgICAgLy8gS29tcG9uZW50eSB3ZXduxJl0cnpuZSBBdXRoIFNlcnZpY2UgLSBOYSBwb2RzdGF3aWUga29kdSBGYXN0QVBJCiAgICAgICAgICAgICAgICByb3V0ZXJzID0gY29tcG9uZW50ICJGYXN0QVBJIFVzZXJzIFJvdXRlcnMiICJPYnPFgnVndWplIMW8xIVkYW5pYSBIVFRQIGRsYSAvYXV0aC8qIGkgL3VzZXJzLyogdcW8eXdhasSFYyBmYXN0YXBpLXVzZXJzIiAiRmFzdEFQSSBVc2VycyIgewogICAgICAgICAgICAgICAgICAgIHRhZ3MgIkNvbXBvbmVudCIKICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgICAgIGF1dGhCYWNrZW5kID0gY29tcG9uZW50ICJBdXRoZW50aWNhdGlvbiBCYWNrZW5kIiAiS29vcmR5bnVqZSBwcm9jZXMgdXdpZXJ6eXRlbG5pYW5pYSBKV1QiICJGYXN0QVBJIFVzZXJzIiB7CiAgICAgICAgICAgICAgICAgICAgdGFncyAiQ29tcG9uZW50IgogICAgICAgICAgICAgICAgfQogICAgICAgICAgICAgICAgand0U3RyYXRlZ3kgPSBjb21wb25lbnQgIkN1c3RvbSBKV1QgU3RyYXRlZ3kiICJHZW5lcnVqZSBpIHdhbGlkdWplIHRva2VueSBKV1QgeiByb2zEhSB1xbx5dGtvd25pa2EiICJQeXRob24gLyBweXRob24tam9zZSIgewogICAgICAgICAgICAgICAgICAgIHRhZ3MgIkNvbXBvbmVudCIKICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgICAgIHVzZXJNYW5hZ2VyID0gY29tcG9uZW50ICJVc2VyIE1hbmFnZXIiICJaYXJ6xIVkemEgbG9naWvEhSB0d29yemVuaWEsIGFrdHVhbGl6YWNqaSBpIHBvYmllcmFuaWEgdcW8eXRrb3duaWvDs3ciICJGYXN0QVBJIFVzZXJzIC8gUHl0aG9uIiB7CiAgICAgICAgICAgICAgICAgICAgdGFncyAiQ29tcG9uZW50IgogICAgICAgICAgICAgICAgfQogICAgICAgICAgICAgICAgZGJBZGFwdGVyID0gY29tcG9uZW50ICJTUUxBbGNoZW15IFVzZXIgREIgQWRhcHRlciIgIkFkYXB0ZXIgbWFwdWrEhWN5IG9wZXJhY2plIFVzZXIgTWFuYWdlcmEgbmEgemFweXRhbmlhIFNRTEFsY2hlbXkiICJGYXN0QVBJIFVzZXJzIC8gU1FMQWxjaGVteSIgewogICAgICAgICAgICAgICAgICAgIHRhZ3MgIkNvbXBvbmVudCIKICAgICAgICAgICAgICAgIH0KICAgIAogICAgICAgICAgICAgICAgLy8gUmVsYWNqZSB3ZXduxJl0cnpuZSBtacSZZHp5IGtvbXBvbmVudGFtaSBBdXRoIFNlcnZpY2UKICAgICAgICAgICAgICAgIHJvdXRlcnMgLT4gdXNlck1hbmFnZXIgIlXFvHl3YSBkbyByZWplc3RyYWNqaSwgcG9iaWVyYW5pYS96YXJ6xIVkemFuaWEgdcW8eXRrb3duaWthbWkiICJGYXN0QVBJIGRlcGVuZGVuY3kgaW5qZWN0aW9uIgogICAgICAgICAgICAgICAgcm91dGVycyAtPiBhdXRoQmFja2VuZCAiVcW8eXdhIGRvIGxvZ293YW5pYSwgd2VyeWZpa2FjamkgdG9rZW7Ds3ciICJGYXN0QVBJIGRlcGVuZGVuY3kgaW5qZWN0aW9uIgogICAgICAgICAgICAgICAgYXV0aEJhY2tlbmQgLT4gand0U3RyYXRlZ3kgIkRlbGVndWplIHR3b3J6ZW5pZS9vZGN6eXQgdG9rZW51IiAiUHl0aG9uIGNhbGwiCiAgICAgICAgICAgICAgICB1c2VyTWFuYWdlciAtPiBkYkFkYXB0ZXIgIkRlbGVndWplIG9wZXJhY2plIGJhem9kYW5vd2UgbmEgdcW8eXRrb3duaWthY2giICJQeXRob24gY2FsbCIKICAgIAogICAgICAgICAgICAgICAgLy8gUmVsYWNqYSBrb21wb25lbnR1IERCIEFkYXB0ZXIgZG8ga29udGVuZXJhIGJhenkgZGFueWNoCiAgICAgICAgICAgICAgICAvLyBkYkFkYXB0ZXIgLT4gZGJfYXV0aCAiV3lrb251amUgb3BlcmFjamUgQ1JVRCBuYSB0YWJlbGkgJ3VzZXJzJyIgIlNRTEFsY2hlbXkgLyBUQ1AiCiAgICAgICAgICAgIH0KICAgIAogICAgICAgICAgICBvcmRlciA9IGNvbnRhaW5lciAiT3JkZXIgU2VydmljZSIgIlphbcOzd2llbmlhLCBzZXNqZSBzdG9saWvDs3csIHN0YXR1c3kiICJGYXN0QVBJIgogICAgICAgICAgICBraXRjaGVuID0gY29udGFpbmVyICJLaXRjaGVuIFNlcnZpY2UiICJPYnPFgnVnYSB6YW3Ds3dpZcWEIGt1Y2hlbm55Y2giICJGYXN0QVBJIgogICAgICAgICAgICBwYXltZW50ID0gY29udGFpbmVyICJQYXltZW50IFNlcnZpY2UiICJJbnRlZ3JhY2phIHogYnJhbWthbWkgcMWCYXRub8WbY2kiICJGYXN0QVBJIgogICAgICAgICAgICBzbXMgPSBjb250YWluZXIgIlNNUyBTZXJ2aWNlIiAiV3lzecWCYW5pZSBwb3dpYWRvbWllxYQgU01TIiAiRmFzdEFQSSIKICAgICAgICAgICAgZW1haWwgPSBjb250YWluZXIgIkUtbWFpbCBTZXJ2aWNlIiAiV3lzecWCYW5pZSByYWNodW5rw7N3IGkgZS1tYWlsaSIgIkZhc3RBUEkiCiAgICAKICAgICAgICAgICAgLy8gLS0tIEtvbnRlbmVyeSBCYXpvZGFub3dlIC0tLQogICAgICAgICAgICBkYl9hdXRoID0gY29udGFpbmVyICJBdXRoIERCIiAiQmF6YSBkYW55Y2ggdcW8eXRrb3duaWvDs3cgaSByw7NsIiAiUG9zdGdyZVNRTCIgewogICAgICAgICAgICAgICAgdGFncyAiRGF0YWJhc2UiCiAgICAgICAgICAgIH0KICAgICAgICAgICAgZGJfb3JkZXJzID0gY29udGFpbmVyICJPcmRlcnMgREIiICJCYXphIGRhbnljaCB6YW3Ds3dpZcWEIiAiUG9zdGdyZVNRTCIgewogICAgICAgICAgICAgICAgdGFncyAiRGF0YWJhc2UiCiAgICAgICAgICAgIH0KICAgICAgICAgICAgZGJfa2l0Y2hlbiA9IGNvbnRhaW5lciAiS2l0Y2hlbiBEQiIgIkJhemEgZGFueWNoIGt1Y2huaSIgIlBvc3RncmVTUUwiIHsKICAgICAgICAgICAgICAgIHRhZ3MgIkRhdGFiYXNlIgogICAgICAgICAgICB9CiAgICAgICAgICAgIGRiX3BheW1lbnQgPSBjb250YWluZXIgIlBheW1lbnQgREIiICJMb2dpIHDFgmF0bm/Fm2NpIiAiUG9zdGdyZVNRTCIgewogICAgICAgICAgICAgICAgdGFncyAiRGF0YWJhc2UiCiAgICAgICAgICAgIH0KICAgICAgICAgICAgZGJfc21zID0gY29udGFpbmVyICJTTVMgREIiICJMb2dpIHd5c8WCYW55Y2ggU01TLcOzdyIgIlBvc3RncmVTUUwiIHsKICAgICAgICAgICAgICAgIHRhZ3MgIkRhdGFiYXNlIgogICAgICAgICAgICB9CiAgICAgICAgICAgIGRiX2VtYWlsID0gY29udGFpbmVyICJFbWFpbCBEQiIgIkxvZ2kgd3lzxYJhbnljaCBlLW1haWxpIiAiUG9zdGdyZVNRTCIgewogICAgICAgICAgICAgICAgdGFncyAiRGF0YWJhc2UiCiAgICAgICAgICAgIH0KICAgIAogICAgICAgICAgICAvLyAtLS0gUmVsYWNqZSBNScSYRFpZIEtPTlRFTkVSQU1JIChkbGEgd2lkb2t1IFBvemlvbXUgMikgLS0tCiAgICAKICAgICAgICAgICAgLy8gR2F0ZXdheSAtPiBTZXJ3aXN5CiAgICAgICAgICAgIGdhdGV3YXkgLT4gYXV0aCAiUmVqZXN0cmFjamEsIGxvZ293YW5pZSwgSldUIgogICAgICAgICAgICBnYXRld2F5IC0+IG9yZGVyICJaYXJ6xIVkemFuaWUgemFtw7N3aWVuaWFtaSIKICAgICAgICAgICAgZ2F0ZXdheSAtPiBraXRjaGVuICJaYW3Ds3dpZW5pYSBrdWNoZW5uZSIKICAgICAgICAgICAgZ2F0ZXdheSAtPiBwYXltZW50ICJSb3pwb2N6eW5hIHDFgmF0bm/Fm8SHIgogICAgCiAgICAgICAgICAgIC8vIFNlcndpcyAtPiBTZXJ3aXMgKEJhY2tlbmQgLT4gQmFja2VuZCkKICAgICAgICAgICAgb3JkZXIgLT4gc21zICJJbmZvcm11amUgbyBwcnp5asSZY2l1IHphbcOzd2llbmlhIgogICAgICAgICAgICBraXRjaGVuIC0+IHNtcyAiSW5mb3JtdWplIG8gZ290b3d5bSBkYW5pdSIKICAgICAgICAgICAgcGF5bWVudCAtPiBzbXMgIlBvdHdpZXJkemEgcMWCYXRub8WbxIciCiAgICAgICAgICAgIHBheW1lbnQgLT4gZW1haWwgIld5c3nFgmEgcmFjaHVuZWsgcG8gcMWCYXRub8WbY2kiCiAgICAKICAgICAgICAgICAgLy8gU2Vyd2lzIC0+IEJhemEgZGFueWNoCiAgICAgICAgICAgIGF1dGggLT4gZGJfYXV0aCAiQ3p5dGEvWmFwaXN1amUgZGFuZSB1d2llcnp5dGVsbmlhasSFY2UiCiAgICAgICAgICAgIG9yZGVyIC0+IGRiX29yZGVycyAiQ3p5dGEvWmFwaXN1amUgZGFuZSB6YW3Ds3dpZcWEIgogICAgICAgICAgICBraXRjaGVuIC0+IGRiX2tpdGNoZW4gIkN6eXRhL1phcGlzdWplIHN0YXR1c3kgemFtw7N3aWXFhCBrdWNoZW5ueWNoIgogICAgICAgICAgICBzbXMgLT4gZGJfc21zICJDenl0YS9aYXBpc3VqZSBsb2dpIHd5c8WCYW55Y2ggU01TLcOzdyIKICAgICAgICAgICAgZW1haWwgLT4gZGJfZW1haWwgIkN6eXRhL1phcGlzdWplIGxvZ2kgd3lzxYJhbnljaCBlLW1haWxpIgogICAgICAgICAgICBwYXltZW50IC0+IGRiX3BheW1lbnQgIkN6eXRhL1phcGlzdWplIGxvZ2kgcMWCYXRub8WbY2kiCiAgICAKICAgICAgICAgICAgLy8gLS0tIFJlbGFjamEgS09NUE9ORU5UIC0+IEtPTlRFTkVSIERCIChkbGEgd2lkb2t1IFBvemlvbXUgMyAtIEF1dGggU2VydmljZSkgLS0tCiAgICAgICAgICAgIHN5c3RlbS5hdXRoLmRiQWRhcHRlciAtPiBzeXN0ZW0uZGJfYXV0aCAiV3lrb251amUgb3BlcmFjamUgQ1JVRCBuYSB0YWJlbGkgJ3VzZXJzJyIgIlNRTEFsY2hlbXkiCiAgICAKICAgICAgICAgICAgLy8gU2Vyd2lzIC0+IFpld27EmXRyem5lIHN5c3RlbXkKICAgICAgICAgICAgc21zIC0+IHNtc19nYXRld2F5ICJXeXN5xYJhIGRhbmUgZG8gcG93aWFkb21pZcWEIgogICAgICAgICAgICBlbWFpbCAtPiBlbWFpbF9nYXRld2F5ICJXeXN5xYJhIGRhbmUgZG8gcmFjaHVua8OzdyIKICAgICAgICAgICAgcGF5bWVudCAtPiBwYXltZW50X2dhdGV3YXkgIld5c3nFgmEgZGFuZSBkbyBwxYJhdG5vxZtjaSIKICAgICAgICB9CiAgICAKICAgICAgICAvLyAtLS0gUmVsYWNqZSBwcnplY2hvZHrEhWNlIHByemV6IGdyYW5pY8SZIHN5c3RlbXUgLS0tCiAgICAKICAgICAgICAvLyBSZWxhY2phIGRsYSB3aWRva3Uga29udGVrc3R1IChQb3ppb20gMSkKICAgICAgICB1c2VyIC0+IHN5c3RlbSAiVcW8eXdhIHN5c3RlbXUgZG8gc2vFgmFkYW5pYSB6YW3Ds3dpZcWELCB6YXJ6xIVkemFuaWEsIGV0Yy4iCiAgICAKICAgICAgICAvLyBSZWxhY2phIFXFvHl0a293bmlrIC0+IEdhdGV3YXkgKGRsYSB3aWRva3UgUG96aW9tdSAyKQogICAgICAgIHVzZXIgLT4gc3lzdGVtLmdhdGV3YXkgIld5c3nFgmEgxbzEhWRhbmlhIEFQSSAoUkVTVCkiCiAgICAKICAgICAgICAvLyBSZWxhY2phIEdhdGV3YXkgLT4gS29tcG9uZW50IChkbGEgd2lkb2t1IFBvemlvbXUgMyAtIEF1dGggU2VydmljZSkKICAgICAgICBzeXN0ZW0uZ2F0ZXdheSAtPiBzeXN0ZW0uYXV0aC5yb3V0ZXJzICJQcnpla2F6dWplIMW8xIVkYW5pYSBIVFRQIGRvIG9ic8WCdWdpIHByemV6IEZhc3RBUEkgVXNlcnMiCiAgICB9CiAgICAvLyB2aWV3cy5kc2wKICAgIHZpZXdzIHsKICAgICAgICAvLyAtLS0gV2lkb2sgS29udGVrc3R1IFN5c3RlbXUgKFBvemlvbSAxKSAtLS0KICAgICAgICBzeXN0ZW1Db250ZXh0IHN5c3RlbSAiU3lzdGVtQ29udGV4dCIgIkRpYWdyYW0ga29udGVrc3Rvd3kgKFBvemlvbSAxKSBwb2thenVqxIVjeSBpbnRlcmFrY2plIFN5c3RlbXUgWmFtw7N3aWXFhCB3IFJlc3RhdXJhY2ppIHogdcW8eXRrb3duaWthbWkgaSBzeXN0ZW1hbWkgemV3bsSZdHJ6bnltaS4iIHsKICAgICAgICAgICAgLy8gSW5jbHVkZSBhbGwgdG9wLWxldmVsIGVsZW1lbnRzIChwZW9wbGUsIHNvZnR3YXJlIHN5c3RlbXMpCiAgICAgICAgICAgIGluY2x1ZGUgKgogICAgICAgICAgICBkZXNjcmlwdGlvbiAiRGlhZ3JhbSBLb250ZWtzdG93eSBDNCAtIFBvemlvbSAxIgogICAgICAgIH0KICAgIAogICAgICAgIC8vIC0tLSBXaWRvayBLb250ZW5lcsOzdyAoUG96aW9tIDIpIC0tLQogICAgICAgIGNvbnRhaW5lciBzeXN0ZW0gIkNvbnRhaW5lcnMiICJEaWFncmFtIGtvbnRlbmVyw7N3IChQb3ppb20gMikgcG9rYXp1asSFY3kgZ8WCw7N3bmUgYmxva2kgYnVkdWrEhWNlIFN5c3RlbSBaYW3Ds3dpZcWEIHcgUmVzdGF1cmFjamkuIiB7CiAgICAgICAgICAgIC8vIEluY2x1ZGUgZXZlcnl0aGluZyBieSBkZWZhdWx0IGZvciBhIGNvbnRhaW5lciB2aWV3IChwZW9wbGUsIGV4dGVybmFsIHN5c3RlbXMsIGludGVybmFsIGNvbnRhaW5lcnMpCiAgICAgICAgICAgIGluY2x1ZGUgKgogICAgICAgICAgICBkZXNjcmlwdGlvbiAiRGlhZ3JhbSBLb250ZW5lcsOzdyBDNCAtIFBvemlvbSAyIgogICAgICAgIH0KICAgIAogICAgICAgIC8vIC0tLSBXaWRvayBLb21wb25lbnTDs3cgZGxhIEF1dGggU2VydmljZSAoUG96aW9tIDMpIC0tLQogICAgICAgIGNvbXBvbmVudCBzeXN0ZW0uYXV0aCAiQXV0aENvbXBvbmVudHMiICJEaWFncmFtIGtvbXBvbmVudMOzdyAoUG96aW9tIDMpIGRsYSBVc8WCdWdpIEF1dG9yeXphY3lqbmVqIChBdXRoIFNlcnZpY2UpLiIgewogICAgICAgICAgICAvLyBJbmNsdWRlIGFsbCBjb21wb25lbnRzIHdpdGhpbiBhdXRoIHNlcnZpY2UsIHBsdXMgY29ubmVjdGVkIGVsZW1lbnRzIChnYXRld2F5LCBkYl9hdXRoKQogICAgICAgICAgICBpbmNsdWRlICoKICAgICAgICAgICAgZGVzY3JpcHRpb24gIkRpYWdyYW0gS29tcG9uZW50w7N3IEM0IC0gUG96aW9tIDMgKEF1dGggU2VydmljZSkiCiAgICAgICAgfQogICAgCiAgICAgICAgLy8gRG/FgsSFY3phbmllIHN0eWzDs3cKICAgICAgICAvLyBzdHlsZXMuZHNsCiAgICAgICAgc3R5bGVzIHsKICAgICAgICAgICAgLy8gU3R5bCBkbGEgVcW8eXRrb3duaWvDs3cgWmV3bsSZdHJ6bnljaAogICAgICAgICAgICBlbGVtZW50ICJQZXJzb24iIHsKICAgICAgICAgICAgICAgIHNoYXBlIFBlcnNvbgogICAgICAgICAgICAgICAgYmFja2dyb3VuZCAjNTE5MUZBCiAgICAgICAgICAgICAgICBjb2xvciAjZmZmZmZmCiAgICAgICAgICAgIH0KICAgICAgICAgICAgLy8gU3R5bCBkbGEgU3lzdGVtdSBHxYLDs3duZWdvIGkgWmV3bsSZdHJ6bnljaAogICAgICAgICAgICBlbGVtZW50ICJTb2Z0d2FyZSBTeXN0ZW0iIHsKICAgICAgICAgICAgICAgIGJhY2tncm91bmQgIzhBMkJFMgogICAgICAgICAgICAgICAgY29sb3IgI2ZmZmZmZgogICAgICAgICAgICAgICAgc2hhcGUgQm94CiAgICAgICAgICAgIH0KICAgICAgICAgICAgLy8gU3R5bCBkbGEga29udGVuZXLDs3cgYXBsaWthY3lqbnljaAogICAgICAgICAgICBlbGVtZW50ICJDb250YWluZXIiIHsKICAgICAgICAgICAgICAgIGJhY2tncm91bmQgIzlhMjhmOAogICAgICAgICAgICAgICAgY29sb3IgI2ZmZmZmZgogICAgICAgICAgICAgICAgc2hhcGUgQm94CiAgICAgICAgICAgIH0KICAgICAgICAgICAgLy8gU3R5bCBkbGEga29udGVuZXLDs3cgb3puYWN6b255Y2ggdGFnaWVtICJEYXRhYmFzZSIKICAgICAgICAgICAgZWxlbWVudCAiRGF0YWJhc2UiIHsKICAgICAgICAgICAgICAgIHNoYXBlIEN5bGluZGVyCiAgICAgICAgICAgICAgICBiYWNrZ3JvdW5kICM0YjAwODIKICAgICAgICAgICAgICAgIGNvbG9yICNmZmZmZmYKICAgICAgICAgICAgfQogICAgICAgICAgICAvLyBTdHlsIGRsYSBLb21wb25lbnTDs3cKICAgICAgICAgICAgZWxlbWVudCAiQ29tcG9uZW50IiB7CiAgICAgICAgICAgICAgICBiYWNrZ3JvdW5kICNCMzZBRkIKICAgICAgICAgICAgICAgIGNvbG9yICNmZmZmZmYKICAgICAgICAgICAgICAgIHNoYXBlIENvbXBvbmVudAogICAgICAgICAgICB9CiAgICAgICAgfQogICAgfQp9"
+  },
+  "views" : {
+    "componentViews" : [ {
+      "containerId" : "7",
+      "description" : "Diagram Komponentów C4 - Poziom 3 (Auth Service)",
+      "dimensions" : {
+        "height" : 2800,
+        "width" : 1340
+      },
+      "elements" : [ {
+        "id" : "6",
+        "x" : 445,
+        "y" : 1
+      }, {
+        "id" : "8",
+        "x" : 445,
+        "y" : 601
+      }, {
+        "id" : "9",
+        "x" : 820,
+        "y" : 1201
+      }, {
+        "id" : "10",
+        "x" : 820,
+        "y" : 1801
+      }, {
+        "id" : "11",
+        "x" : 70,
+        "y" : 1201
+      }, {
+        "id" : "12",
+        "x" : 70,
+        "y" : 1801
+      }, {
+        "id" : "22",
+        "x" : 70,
+        "y" : 2375
+      } ],
+      "externalContainerBoundariesVisible" : false,
+      "key" : "AuthComponents",
+      "order" : 3,
+      "relationships" : [ {
+        "id" : "13"
+      }, {
+        "id" : "14"
+      }, {
+        "id" : "15"
+      }, {
+        "id" : "16"
+      }, {
+        "id" : "42"
+      }, {
+        "id" : "51"
+      } ]
+    } ],
+    "configuration" : {
+      "branding" : { },
+      "lastSavedView" : "AuthComponents",
+      "styles" : {
+        "elements" : [ {
+          "background" : "#5191fa",
+          "color" : "#ffffff",
+          "shape" : "Person",
+          "tag" : "Person"
+        }, {
+          "background" : "#8a2be2",
+          "color" : "#ffffff",
+          "shape" : "Box",
+          "tag" : "Software System"
+        }, {
+          "background" : "#9a28f8",
+          "color" : "#ffffff",
+          "shape" : "Box",
+          "tag" : "Container"
+        }, {
+          "background" : "#4b0082",
+          "color" : "#ffffff",
+          "shape" : "Cylinder",
+          "tag" : "Database"
+        }, {
+          "background" : "#b36afb",
+          "color" : "#ffffff",
+          "shape" : "Component",
+          "tag" : "Component"
+        } ]
+      },
+      "terminology" : { }
+    },
+    "containerViews" : [ {
+      "description" : "Diagram Kontenerów C4 - Poziom 2",
+      "dimensions" : {
+        "height" : 2930,
+        "width" : 3795
+      },
+      "elements" : [ {
+        "id" : "1",
+        "x" : 2140,
+        "y" : 45
+      }, {
+        "id" : "2",
+        "x" : 2275,
+        "y" : 2575
+      }, {
+        "id" : "3",
+        "x" : 55,
+        "y" : 2145
+      }, {
+        "id" : "4",
+        "x" : 55,
+        "y" : 640
+      }, {
+        "id" : "6",
+        "x" : 2115,
+        "y" : 645
+      }, {
+        "id" : "7",
+        "x" : 840,
+        "y" : 1150
+      }, {
+        "id" : "17",
+        "x" : 2525,
+        "y" : 1150
+      }, {
+        "id" : "18",
+        "x" : 3280,
+        "y" : 1150
+      }, {
+        "id" : "19",
+        "x" : 1690,
+        "y" : 1150
+      }, {
+        "id" : "20",
+        "x" : 2525,
+        "y" : 1675
+      }, {
+        "id" : "21",
+        "x" : 1215,
+        "y" : 1675
+      }, {
+        "id" : "22",
+        "x" : 575,
+        "y" : 1675
+      }, {
+        "id" : "23",
+        "x" : 3280,
+        "y" : 660
+      }, {
+        "id" : "24",
+        "x" : 3280,
+        "y" : 1675
+      }, {
+        "id" : "25",
+        "x" : 1875,
+        "y" : 1675
+      }, {
+        "id" : "26",
+        "x" : 2885,
+        "y" : 2140
+      }, {
+        "id" : "27",
+        "x" : 1215,
+        "y" : 2140
+      } ],
+      "externalSoftwareSystemBoundariesVisible" : false,
+      "key" : "Containers",
+      "order" : 2,
+      "relationships" : [ {
+        "id" : "28"
+      }, {
+        "id" : "29"
+      }, {
+        "id" : "30",
+        "vertices" : [ {
+          "x" : 2700,
+          "y" : 980
+        } ]
+      }, {
+        "id" : "31"
+      }, {
+        "id" : "32"
+      }, {
+        "id" : "33"
+      }, {
+        "id" : "34"
+      }, {
+        "id" : "35"
+      }, {
+        "id" : "36"
+      }, {
+        "id" : "37"
+      }, {
+        "id" : "38"
+      }, {
+        "id" : "39"
+      }, {
+        "id" : "40"
+      }, {
+        "id" : "41"
+      }, {
+        "id" : "43"
+      }, {
+        "id" : "45"
+      }, {
+        "id" : "47"
+      }, {
+        "id" : "50"
+      } ],
+      "softwareSystemId" : "5"
+    } ],
+    "systemContextViews" : [ {
+      "description" : "Diagram Kontekstowy C4 - Poziom 1",
+      "dimensions" : {
+        "height" : 1600,
+        "width" : 2000
+      },
+      "elements" : [ {
+        "id" : "1",
+        "x" : 45,
+        "y" : 595
+      }, {
+        "id" : "2",
+        "x" : 1495,
+        "y" : 45
+      }, {
+        "id" : "3",
+        "x" : 1495,
+        "y" : 645
+      }, {
+        "id" : "4",
+        "x" : 1495,
+        "y" : 1245
+      }, {
+        "id" : "5",
+        "x" : 745,
+        "y" : 645
+      } ],
+      "enterpriseBoundaryVisible" : true,
+      "key" : "SystemContext",
+      "order" : 1,
+      "relationships" : [ {
+        "id" : "44"
+      }, {
+        "id" : "46"
+      }, {
+        "id" : "48"
+      }, {
+        "id" : "49"
+      } ],
+      "softwareSystemId" : "5"
+    } ]
+  }
+}
