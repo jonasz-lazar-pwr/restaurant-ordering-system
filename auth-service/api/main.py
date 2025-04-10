@@ -10,7 +10,7 @@ from fastapi_users.authentication import BearerTransport
 
 app = FastAPI(
     title="Auth Service API",
-    description="REST API for authentication and user management",
+    description="REST API for auth and user management",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -44,10 +44,23 @@ app.include_router(
     tags=["users"]
 )
 
-@app.get("/", summary="Health check", tags=["Health"])
+@app.get(
+    "/",
+    summary="Health check",
+    tags=["Health"]
+)
 def health_check():
     """Simple health check endpoint that returns 200 OK."""
     return {"status": "ok"}
+
+# @app.get(
+#     "/admin/secret",
+#     tags=["admin"]
+# )
+# def get_admin_secret():
+#     """Endpoint tavailable only to admin users."""
+#     return {"secret": "Top secret info for admins only."}
+
 
 
 # @app.post(

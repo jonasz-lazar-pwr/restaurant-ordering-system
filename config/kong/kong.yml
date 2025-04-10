@@ -5,16 +5,19 @@ services:
     url: http://auth-service:8002
 
     routes:
+      # PUBLIC - register (no JWT)
       - name: register-route
         paths:
           - /auth/register
         strip_path: false
 
+      # PUBLIC - login (no JWT)
       - name: login-route
         paths:
           - /auth/jwt/login
         strip_path: false
 
+      # PROTECTED - logout (JWT required)
       - name: logout-route
         paths:
           - /auth/jwt/logout
@@ -27,6 +30,7 @@ services:
               secret_is_base64: false
               run_on_preflight: false
 
+      # PROTECTED - user info (JWT required)
       - name: users-me-route
         paths:
           - /users/me
@@ -44,5 +48,5 @@ consumers:
     custom_id: "auth-service"
     jwt_secrets:
       - algorithm: HS256
-        key: "auth-service"       # to musi być identyczne jak `iss` w JWT
-        secret: "4lm*@ww6oo^dm1+h#nti(!hm0ujgwgtuyxs05_r(051s&ozg=9"
+        key: "auth-service"
+        secret: "xbfwxdmvq(=bi-kwt@8+2lzr9zu_iin%h_iviq6h@hguypn%hg"

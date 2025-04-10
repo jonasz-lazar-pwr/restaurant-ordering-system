@@ -6,6 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTableUUID
 from enum import Enum
 from .base import Base
+from ..core.config import settings
 
 
 # Enum for available user roles in the system
@@ -19,6 +20,7 @@ class UserRole(str, Enum):
 # User model extending FastAPI Users base user table (UUID-based)
 class User(SQLAlchemyBaseUserTableUUID, Base):
     __tablename__ = "users"
+    __table_args__ = {"schema": settings.AUTH_SERVICE_DB_SCHEMA}
 
     first_name: Mapped[str] = mapped_column(String, nullable=False)
     last_name: Mapped[str] = mapped_column(String, nullable=False)

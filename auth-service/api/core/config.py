@@ -3,11 +3,17 @@
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    AUTH_SERVICE_DB_HOST: str
-    AUTH_SERVICE_DB_NAME: str
-    AUTH_SERVICE_DB_USER: str
-    AUTH_SERVICE_DB_PASSWORD: str
-    AUTH_SERVICE_DB_PORT: str
+    # DB config
+    DB_HOST: str
+    DB_NAME: str
+    DB_USER: str
+    DB_PASSWORD: str
+    DB_PORT: str
+    AUTH_SERVICE_DB_SCHEMA: str
+    # JWT config
+    JWT_AUDIENCE: str
+    JWT_ISSUER: str
+    JWT_LIFETIME_SECONDS: int
     SECRET_KEY: str
 
     class Config:
