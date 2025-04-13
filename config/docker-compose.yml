@@ -30,6 +30,21 @@ services:
     depends_on:
       - database
 
+  order-service:
+    image: order-service:latest
+    build:
+      context: ../order-service
+      dockerfile: Dockerfile
+    container_name: order-service
+    command: >
+      uvicorn api.main:app --host 0.0.0.0 --port 8003
+    volumes:
+      - ../order-service:/app
+    ports:
+      - "8003:8003"
+    depends_on:
+      - database
+
   kong:
     image: kong:3.4
     container_name: api-gateway
