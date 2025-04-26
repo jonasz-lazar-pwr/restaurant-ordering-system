@@ -136,6 +136,8 @@ if access_token:
         ]
     }
 
+    print(f"Sending order data: {order_data}")
+
     try:
         response = requests.post(order_url, headers=order_headers, json=order_data, allow_redirects=False)
         response.raise_for_status()
