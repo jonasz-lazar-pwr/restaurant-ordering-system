@@ -1,10 +1,21 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
+from sqlalchemy import select
 from typing import List
-from .models import MenuItem
+from .models import MenuItem, Order
 from .schemas import QRCode, OrderRequest
 from .core import simulate_qr_scan
+from .init_db import get_db, init_db
+from sqlalchemy.orm import selectinload
+from collections import Counter
 
 app = FastAPI()
+
+@app.on_event("startup")
+async def startup_event():
+    await init_db()
+
 
 # Temporary simulated menu
 menu_items = [
@@ -35,23 +46,45 @@ def scan_qr(qr: QRCode):
 
 # Endpoint to handle orders
 @app.post("/order/")
-def order_item(order: OrderRequest):
+async def order_item(order: OrderRequest, db: AsyncSession = Depends(get_db)):
     table_number = order.qr_code
-    if table_number not in orders:
-        raise HTTPException(status_code=400, detail="QR code not scanned yet or invalid.")
+    result = await db.execute(
+        select(MenuItem).where(MenuItem.id == order.item_id)
+    )
+    menu_item = result.scalar_one_or_none()
 
-    # Find item in the menu
-    item = next((item for item in menu_items if item.id == order.item_id), None)
-    if item:
-        orders[table_number].append(item)  # Add item to the order
-        return {"message": f"Ordered {item.name} for table {table_number} successfully!"}
+    if menu_item:
+        db_order = Order(table_number=table_number, menu_item_id=menu_item.id)
+        db.add(db_order)
+        await db.commit()
+        await db.refresh(db_order)
+        return {"message": f"Ordered {menu_item.name} for table {table_number} successfully!"}
     else:
         raise HTTPException(status_code=404, detail="Item not found")
 
 
 # Endpoint to check table's order
 @app.get("/orders/{table_number}")
-def get_orders(table_number: str):
-    if table_number in orders:
-        return {"table": table_number, "orders": orders[table_number]}
-    raise HTTPException(status_code=404, detail="Table not found")
+async def get_orders(table_number: str, db: AsyncSession = Depends(get_db)):
+    result_orders = await db.execute(
+        select(Order).options(selectinload(Order.menu_item)).where(Order.table_number == table_number)
+    )
+    orders = result_orders.scalars().all()
+
+    if not orders:
+        raise HTTPException(status_code=404, detail="No orders found for this table")
+
+    item_counter = Counter(order.menu_item_id for order in orders)
+
+    ordered_items = []
+    for order in orders:
+        menu_item = order.menu_item
+        ordered_items.append({
+            "item": menu_item.name,
+            "quantity": item_counter[menu_item.id]
+        })
+
+    return {
+        "table": table_number,
+        "orders": ordered_items
+    }
