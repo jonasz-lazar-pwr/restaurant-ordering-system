@@ -3,7 +3,6 @@ _format_version: "3.0"
 services:
   - name: auth-service
     url: http://auth-service:8002
-
     routes:
       # PUBLIC - register (no JWT)
       - name: register-route
@@ -42,6 +41,20 @@ services:
               key_claim_name: "iss"
               secret_is_base64: false
               run_on_preflight: false
+
+  - name: order-service
+    url: http://order-service:8003
+    routes:
+      - name: scan-qr-route
+        paths:
+          - /order-service/scan_qr
+        strip_path: false
+
+      - name: order-route
+        paths:
+          - /order-service/order
+        strip_path: false
+
 
 consumers:
   - username: "auth-consumer"

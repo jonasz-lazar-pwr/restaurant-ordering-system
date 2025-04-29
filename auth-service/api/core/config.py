@@ -17,6 +17,6 @@ class Settings(BaseSettings):
     SECRET_KEY: str
 
     class Config:
-        env_file = ".env"
+        env_file = "../../../config/.env"
 
 settings = Settings()
