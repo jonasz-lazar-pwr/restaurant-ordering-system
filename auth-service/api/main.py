@@ -10,7 +10,7 @@ from fastapi_users.authentication import BearerTransport
 
 app = FastAPI(
     title="Auth Service API",
-    description="REST API for auth and user management",
+    description="REST API for auth and users management",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
