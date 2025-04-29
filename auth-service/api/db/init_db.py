@@ -8,7 +8,7 @@ from api.models.user import User # Ten import jest potrzebny, żeby model się z
 
 async def init_db():
     async with engine.begin() as conn:
-        await conn.execute(text("CREATE SCHEMA IF NOT EXISTS auth"))
+        await conn.execute(text('CREATE SCHEMA IF NOT EXISTS "auth"'))
         await conn.run_sync(Base.metadata.create_all)
 
 if __name__ == "__main__":
