@@ -1,20 +1,35 @@
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
 from sqlalchemy import select
-from typing import List
-from .models import MenuItem, Order
-from .schemas import QRCode, OrderRequest
-from .core import simulate_qr_scan
-from .init_db import get_db, init_db
+
+from api.core.middleware import add_middleware
+from api.db.deps import get_db
+from api.models.models import MenuItem, Order
+from api.schemas.schemas import QRCode, OrderRequest
+from api.utils import simulate_qr_scan
 from sqlalchemy.orm import selectinload
 from collections import Counter
 
-app = FastAPI()
+app = FastAPI(
+    title="Order Service API",
+    description="REST API for orders management",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json"
+)
 
-@app.on_event("startup")
-async def startup_event():
-    await init_db()
+# Add CORS middleware for development
+add_middleware(app)
+
+@app.get(
+    "/",
+    summary="Health check",
+    tags=["Health"]
+)
+def health_check():
+    """Simple health check endpoint that returns 200 OK."""
+    return {"status": "ok"}
 
 
 # Temporary simulated menu
@@ -29,7 +44,6 @@ menu_items = [
 
 # Temporary simulated orders per table
 orders = {}
-
 
 # Endpoint to handle scanning QR code and showing menu
 @app.post("/scan_qr/")
