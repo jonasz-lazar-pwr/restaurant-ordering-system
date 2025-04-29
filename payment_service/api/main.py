@@ -13,7 +13,7 @@ def list_payment_methods():
         methods = payu_client.get_payment_methods()
         return methods
     except PayUError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        raise HTTPException(status_code=502, detail=str(e)) from e #poprawić
 
 @app.post("/payments")
 def create_payment(payment: CreatePaymentRequest):
