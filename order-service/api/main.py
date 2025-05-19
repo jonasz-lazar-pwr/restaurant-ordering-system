@@ -1,3 +1,6 @@
+import aio_pika
+import asyncio
+
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,6 +25,17 @@ app = FastAPI(
 
 # Add CORS middleware for development
 add_middleware(app)
+
+RABBITMQ_URL = "amqp://admin:admin@rabbitmq"
+
+async def send_order_to_payment(order_id: int):
+    connection = await aio_pika.connect_robust(RABBITMQ_URL)
+    channel = await connection.channel()
+    await channel.default_exchange.publish(
+        aio_pika.Message(body=str(order_id).encode()),
+        routing_key="payments_queue"
+    )
+    await connection.close()
 
 @app.get(
     "/",
@@ -79,6 +93,9 @@ async def order_item(
         db.add(db_order)
         await db.commit()
         await db.refresh(db_order)
+
+        asyncio.create_task(send_order_to_payment(db_order.id))
+
         return {
             "message": f"Ordered {menu_item.name} for table {table_number} successfully!",
             "ordered_by": user_email

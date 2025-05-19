@@ -68,6 +68,27 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      RABBITMQ_LOAD_DEFINITIONS: /etc/rabbitmq/definitions.json
+    volumes:
+      - ./rabbitmq_definitions.json:/etc/rabbitmq/definitions.json
+
+  payment-service:
+    image: payment-service:latest
+    container_name: payment-service
+    build:
+      context: ../payment_service
+      dockerfile: Dockerfile
+    command: >
+      uvicorn api.main:app --host 0.0.0.0 --port 8004
+    volumes:
+      - ../payment_service:/app
+    ports:
+      - "8004:8004"
+    env_file:
+      - .env
+    depends_on:
+      - database
+      - rabbitmq
 
 #  kong:
 #    image: kong:3.4
