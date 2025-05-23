@@ -1,12 +1,16 @@
+import aio_pika
+import asyncio
+
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 from api.core.middleware import add_middleware
 from api.db.deps import get_db
 from api.models.models import MenuItem, Order
 from api.schemas.schemas import QRCode, OrderRequest
 from api.utils import simulate_qr_scan
+from api.core.auth import get_current_user
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from collections import Counter
 
@@ -21,6 +25,17 @@ app = FastAPI(
 
 # Add CORS middleware for development
 add_middleware(app)
+
+RABBITMQ_URL = "amqp://admin:admin@rabbitmq"
+
+async def send_order_to_payment(order_id: int):
+    connection = await aio_pika.connect_robust(RABBITMQ_URL)
+    channel = await connection.channel()
+    await channel.default_exchange.publish(
+        aio_pika.Message(body=str(order_id).encode()),
+        routing_key="payments_queue"
+    )
+    await connection.close()
 
 @app.get(
     "/",
@@ -60,8 +75,14 @@ def scan_qr(qr: QRCode):
 
 # Endpoint to handle orders
 @app.post("/order/")
-async def order_item(order: OrderRequest, db: AsyncSession = Depends(get_db)):
+async def order_item(
+    order: OrderRequest,
+    db: AsyncSession = Depends(get_db),
+    token_data: dict = Depends(get_current_user)
+):
     table_number = order.qr_code
+    user_email = token_data.get("email")
+
     result = await db.execute(
         select(MenuItem).where(MenuItem.id == order.item_id)
     )
@@ -72,7 +93,13 @@ async def order_item(order: OrderRequest, db: AsyncSession = Depends(get_db)):
         db.add(db_order)
         await db.commit()
         await db.refresh(db_order)
-        return {"message": f"Ordered {menu_item.name} for table {table_number} successfully!"}
+
+        asyncio.create_task(send_order_to_payment(db_order.id))
+
+        return {
+            "message": f"Ordered {menu_item.name} for table {table_number} successfully!",
+            "ordered_by": user_email
+        }
     else:
         raise HTTPException(status_code=404, detail="Item not found")
 
@@ -102,3 +129,7 @@ async def get_orders(table_number: str, db: AsyncSession = Depends(get_db)):
         "table": table_number,
         "orders": ordered_items
     }
+
+@app.get("/health")
+async def health_check():
+    return {"status": "health ok"}

@@ -47,6 +47,18 @@ services:
     depends_on:
       - database
 
+  api-gateway:
+    build:
+      context: ../api_gateway
+    container_name: api-gateway
+    ports:
+      - "8000:8000"
+    depends_on:
+      - auth-service
+      - order-service
+    env_file:
+      - .env
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -56,22 +68,43 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
-
-  kong:
-    image: kong:3.4
-    container_name: api-gateway
-    restart: unless-stopped
-    ports:
-      - "8000:8000"     # Proxy (HTTP)
-      - "8001:8001"     # Admin API (HTTP)
-      - "8443:8443"     # Proxy (HTTPS)
-      - "8444:8444"     # Admin API (HTTPS)
-    environment:
-      KONG_DATABASE: "off" # tryb bez bazy danych
-      KONG_DECLARATIVE_CONFIG: /kong/kong.yml
-      KONG_LOG_LEVEL: debug
+      RABBITMQ_LOAD_DEFINITIONS: /etc/rabbitmq/definitions.json
     volumes:
-      - ./kong/kong.yml:/kong/kong.yml
+      - ./rabbitmq_definitions.json:/etc/rabbitmq/definitions.json
+
+  payment-service:
+    image: payment-service:latest
+    container_name: payment-service
+    build:
+      context: ../payment_service
+      dockerfile: Dockerfile
+    command: >
+      uvicorn api.main:app --host 0.0.0.0 --port 8004
+    volumes:
+      - ../payment_service:/app
+    ports:
+      - "8004:8004"
+    env_file:
+      - .env
+    depends_on:
+      - database
+      - rabbitmq
+
+#  kong:
+#    image: kong:3.4
+#    container_name: api-gateway-kong
+#    restart: unless-stopped
+#    ports:
+#      - "8000:8000"     # Proxy (HTTP)
+#      - "8001:8001"     # Admin API (HTTP)
+#      - "8443:8443"     # Proxy (HTTPS)
+#      - "8444:8444"     # Admin API (HTTPS)
+#    environment:
+#      KONG_DATABASE: "off" # tryb bez bazy danych
+#      KONG_DECLARATIVE_CONFIG: /kong/kong.yml
+#      KONG_LOG_LEVEL: debug
+#    volumes:
+#      - ./kong/kong.yml:/kong/kong.yml
 
 volumes:
   database_data:

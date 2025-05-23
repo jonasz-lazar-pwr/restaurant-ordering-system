@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     DB_PORT: str
     ORDER_SERVICE_DB_SCHEMA: str
 
+    # JWT config
+    SECRET_KEY: str
+    JWT_ISSUER: str
+
     class Config:
         env_file = "../../../config/.env"
 

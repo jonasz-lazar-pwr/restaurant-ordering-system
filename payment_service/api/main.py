@@ -1,3 +1,6 @@
+import asyncio
+import aio_pika
+
 from fastapi import FastAPI, HTTPException
 from .core.payu_client import PayUClient
 from .schemas.payment import CreatePaymentRequest, CreateRefundRequest
@@ -6,6 +9,29 @@ from .core import config
 
 app = FastAPI()
 payu_client = PayUClient()
+
+RABBITMQ_URL = "amqp://admin:admin@rabbitmq:5672/"
+
+async def on_order_message(message: aio_pika.IncomingMessage):
+    async with message.process():
+        order_id = message.body.decode()
+        print(f"Received new order to pay: {order_id}")
+
+async def consume_orders():
+    while True:
+        try:
+            connection = await aio_pika.connect_robust(RABBITMQ_URL)
+            channel = await connection.channel()
+            queue = await channel.declare_queue("payments_queue")
+            await queue.consume(on_order_message)
+            # print("Started listening for payment orders...")
+        except Exception as e:
+            print("Connection error with rabbit mq: ", e)
+            await asyncio.sleep(5)
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(consume_orders())
 
 @app.get("/payments/methods")
 def list_payment_methods():

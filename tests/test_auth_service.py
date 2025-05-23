@@ -48,6 +48,7 @@ async def test_login_user(user_data):
         )
         assert response.status_code == 200
         data = response.json()
+        print(data["access_token"])
         assert "access_token" in data
 
 @pytest.mark.asyncio
