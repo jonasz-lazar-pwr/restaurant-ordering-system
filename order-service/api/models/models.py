@@ -22,5 +22,6 @@ class Order(Base):
     id = Column(Integer, primary_key=True, index=True)
     table_number = Column(String, index=True)
     menu_item_id = Column(Integer, ForeignKey(f"{settings.ORDER_SERVICE_DB_SCHEMA}.menu_items.id"))
+    user_id = Column(String, index=True, nullable=False)
 
     menu_item = relationship("MenuItem")
