@@ -12,6 +12,7 @@ class Settings(BaseSettings):
 
     # PayU
     # Change ID, POS_ID and SECRET after switching to proper shop
+    # Optional PayU settings – will use default hardcoded values if .env is not present
     PAYU_CLIENT_ID: str = "490096"
     PAYU_CLIENT_SECRET: str = "585ec418430275c1252a591b7ef07185"
     PAYU_MERCHANT_POS_ID: str = "490096"
@@ -19,10 +20,29 @@ class Settings(BaseSettings):
 
     CORS_ALLOW_ORIGINS: str
 
+    # DB settings
+    DB_HOST: str
+    DB_NAME: str
+    DB_USER: str
+    DB_PASSWORD: str
+    DB_PORT: str
+    PAYMENT_SERVICE_DB_SCHEMA: str
+
+    # RabbitMQ
+    RABBITMQ_URL: str
+
     model_config = SettingsConfigDict(
         env_file = ".env",
-        env_file_encoding = 'utf-8',
-        extra = 'ignore'
+        env_file_encoding = "utf-8",
+        extra = "ignore"
     )
+
+    @property
+    def DATABASE_URL(self) -> str:
+        return (
+            f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}"
+            f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+            f"?options=-csearch_path%3D{self.PAYMENT_SERVICE_DB_SCHEMA}"
+        )
 
 settings = Settings()

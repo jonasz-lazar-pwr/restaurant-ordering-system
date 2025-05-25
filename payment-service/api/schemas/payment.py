@@ -27,7 +27,6 @@ class Buyer(BaseModel):
     lastName: str = Field(..., alias="lastName", description="Buyer's last name.")
     language: str = Field(..., description="Language code (e.g., 'pl').")
 
-
 class CreatePaymentRequest(BaseModel):
     """Request schema for creating a payment order."""
 

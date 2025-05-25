@@ -12,6 +12,12 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+# from fastapi import FastAPI, HTTPException
+# from .core.payu_client import PayUClient
+# from .schemas.payment import CreatePaymentRequest, CreateRefundRequest
+# from .core.exceptions import PayUError, OrderError
+# from .core.config import settings
+
 from api.routes.payment import router as payment_router
 from api.core.middleware import add_middleware
 from api.services.payu import PayUClient
@@ -79,3 +85,55 @@ def health_check():
 
 # Register payment-related routes
 app.include_router(payment_router, prefix="/payment", tags=["Payment"])
+
+
+# @app.post("/payments")
+# def create_payment(payment: CreatePaymentRequest):
+#     try:
+#         order_data = {
+#             "notifyUrl": payment.notifyUrl,
+#             "customerIp": payment.customerIp,
+#             "merchantPosId": settings.PAYU_MERCHANT_POS_ID,
+#             "description": payment.description,
+#             "currencyCode": payment.currencyCode,
+#             "totalAmount": payment.totalAmount,
+#             "buyer": payment.buyer.model_dump(),
+#             "products": [product.model_dump() for product in payment.products]
+#         }
+#         response = payu_client.create_order(order_data)
+#         return {
+#             "orderId": response.get("orderId"),
+#             "redirectUri": response.get("redirectUri")
+#         }
+#     except OrderError as e:
+#         raise HTTPException(status_code=502, detail=str(e))
+
+# @app.get("/payments/{order_id}")
+# def get_payment_status(order_id: str):
+#     try:
+#         status = payu_client.get_order_status(order_id)
+#         return status
+#     except OrderError as e:
+#         raise HTTPException(status_code=502, detail=str(e))
+    
+# @app.delete("/payments/{order_id}")
+# def cancel_payment(order_id: str):
+#     try:
+#         status = payu_client.cancel_order(order_id)
+#         return status
+#     except OrderError as e:
+#         raise HTTPException(status_code=502, detail=str(e))
+
+# @app.post("/payments/{order_id}/refund")
+# def refund_payment(order_id: str, refund: CreateRefundRequest):
+#     try:
+#         refund_data = {
+#             "refund": {
+#                 "description" : refund.description,
+#                 "currencyCode" : refund.currencyCode
+#             }
+#         }
+#         response = payu_client.refund_order(order_id, refund_data)
+#         return response
+#     except PayUError as e:
+#         raise HTTPException(status_code=502, detail=str(e))
