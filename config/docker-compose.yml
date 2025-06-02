@@ -90,6 +90,24 @@ services:
       - database
       - rabbitmq
 
+  notification-service:
+    image: notification-service:latest
+    container_name: notification-service
+    build:
+      context: ../notification-service
+      dockerfile: Dockerfile
+    command: >
+      uvicorn api.main:app --host 0.0.0.0 --port ${NOTIFICATION_SERVICE_PORT}
+    volumes:
+      - ../notification-service:/app
+    ports:
+      - "${NOTIFICATION_SERVICE_PORT}:${NOTIFICATION_SERVICE_PORT}"
+    env_file:
+      - .env
+    depends_on:
+      - database
+
+
 #  kong:
 #    image: kong:3.4
 #    container_name: api-gateway-kong
