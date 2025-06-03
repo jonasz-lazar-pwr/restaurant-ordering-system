@@ -23,8 +23,11 @@ class CustomJWTStrategy(JWTStrategy):
             "aud": self.token_audience,
             "exp": expire,
             "sub": str(user.id),
-            "role": user.role,
             "iss": settings.JWT_ISSUER,
+            "role": user.role.value,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email
         }
 
         return jwt.encode(data, self.secret, algorithm=self.algorithm)

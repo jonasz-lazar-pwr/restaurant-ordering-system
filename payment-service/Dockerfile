@@ -32,5 +32,5 @@ COPY . .
 # Remove pip cache (cleanup)
 RUN rm -rf /root/.cache
 
-# Default command to start order-service
-CMD ["sh", "-c", "uvicorn api.main:app --host 0.0.0.0 --port ${ORDER_SERVICE_PORT}"]
+# Default command to start payment-service
+CMD ["sh", "-c", "uvicorn api.main:app --host 0.0.0.0 --port ${PAYMENT_SERVICE_PORT}"]

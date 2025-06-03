@@ -1,9 +1,9 @@
 # api/core/config.py
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
 
 class Settings(BaseSettings):
-    # DB config
     DB_HOST: str
     DB_NAME: str
     DB_USER: str
@@ -11,11 +11,14 @@ class Settings(BaseSettings):
     DB_PORT: str
     ORDER_SERVICE_DB_SCHEMA: str
 
-    # JWT config
-    SECRET_KEY: str
-    JWT_ISSUER: str
+    RABBITMQ_URL: str
 
-    class Config:
-        env_file = "../../../config/.env"
+    CORS_ALLOW_ORIGINS: str
+
+    model_config = SettingsConfigDict(
+        env_file = ".env",
+        env_file_encoding = 'utf-8',
+        extra = 'ignore'
+    )
 
 settings = Settings()

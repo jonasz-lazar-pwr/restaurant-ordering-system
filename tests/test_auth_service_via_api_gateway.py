@@ -1,9 +1,9 @@
-# tests/test_auth_service.py
+# tests/test_auth_service_via_api_gateway.py
 
 import pytest
 import httpx
 
-BASE_URL = "http://localhost:8001"
+BASE_URL = "http://localhost:8000"
 
 @pytest.fixture
 def user_data():
@@ -24,7 +24,7 @@ async def test_register_user(user_data):
     or 400 if user already exists.
     """
     async with httpx.AsyncClient(base_url=BASE_URL) as client:
-        response = await client.post("/auth/register", json=user_data)
+        response = await client.post("api/auth/register", json=user_data)
         assert response.status_code in (201, 400)
 
         if response.status_code == 201:
@@ -39,7 +39,7 @@ async def test_login_user(user_data):
     """
     async with httpx.AsyncClient(base_url=BASE_URL) as client:
         response = await client.post(
-            "/auth/jwt/login",
+            "api/auth/jwt/login",
             data={
                 "username": user_data["email"],
                 "password": user_data["password"]
@@ -54,13 +54,13 @@ async def test_login_user(user_data):
 @pytest.mark.asyncio
 async def test_get_current_user(user_data):
     """
-    Test /auth/users/me endpoint to retrieve current user info.
+    Test api/auth/users/me endpoint to retrieve current user info.
     Requires valid JWT in Authorization header.
     """
     async with httpx.AsyncClient(base_url=BASE_URL) as client:
         # Login first to get access token
         login_response = await client.post(
-            "/auth/jwt/login",
+            "api/auth/jwt/login",
             data={
                 "username": user_data["email"],
                 "password": user_data["password"]
@@ -72,7 +72,7 @@ async def test_get_current_user(user_data):
 
         # Use token to get current user info
         headers = {"Authorization": f"Bearer {token}"}
-        me_response = await client.get("/auth/users/me", headers=headers)
+        me_response = await client.get("api/auth/users/me", headers=headers)
         assert me_response.status_code == 200
         data = me_response.json()
         assert data["email"] == user_data["email"]
@@ -87,7 +87,7 @@ async def test_logout_user(user_data):
     async with httpx.AsyncClient(base_url=BASE_URL) as client:
         # Login first to get access token
         login_response = await client.post(
-            "/auth/jwt/login",
+            "api/auth/jwt/login",
             data={
                 "username": user_data["email"],
                 "password": user_data["password"]
@@ -99,5 +99,5 @@ async def test_logout_user(user_data):
 
         # Call logout endpoint
         headers = {"Authorization": f"Bearer {token}"}
-        logout_response = await client.post("/auth/jwt/logout", headers=headers)
+        logout_response = await client.post("api/auth/jwt/logout", headers=headers)
         assert logout_response.status_code == 204

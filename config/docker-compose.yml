@@ -1,17 +1,34 @@
 services:
-  database:
+  postgres:
     image: postgres:15-alpine
-    container_name: database
+    container_name: postgres
     environment:
       POSTGRES_DB: "${DB_NAME}"
       POSTGRES_USER: "${DB_USER}"
       POSTGRES_PASSWORD: "${DB_PASSWORD}"
     volumes:
-      - database_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     ports:
       - "${DB_PORT}:${DB_PORT}"
     env_file:
       - .env
+
+  api-gateway:
+    image: api-gateway:latest
+    container_name: api-gateway
+    build:
+      context: ../api-gateway
+      dockerfile: Dockerfile
+    command: >
+      uvicorn api.main:app --host 0.0.0.0 --port ${API_GATEWAY_PORT}
+    volumes:
+      - ../api-gateway:/app
+    ports:
+      - "${API_GATEWAY_PORT}:${API_GATEWAY_PORT}"
+    env_file:
+      - .env
+    depends_on:
+      - postgres
 
   auth-service:
     image: auth-service:latest
@@ -28,7 +45,7 @@ services:
     env_file:
       - .env
     depends_on:
-      - database
+      - postgres
 
   order-service:
     image: order-service:latest
@@ -45,50 +62,24 @@ services:
     env_file:
       - .env
     depends_on:
-      - database
-
-  api-gateway:
-    build:
-      context: ../api_gateway
-    container_name: api-gateway
-    ports:
-      - "8000:8000"
-    depends_on:
-      - auth-service
-      - order-service
-    env_file:
-      - .env
-
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbitmq
-    ports:
-      - "5672:5672"     # Port do komunikacji aplikacyjnej (AMQP)
-      - "15672:15672"   # Port do UI (RabbitMQ Management)
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
-      RABBITMQ_LOAD_DEFINITIONS: /etc/rabbitmq/definitions.json
-    volumes:
-      - ./rabbitmq_definitions.json:/etc/rabbitmq/definitions.json
+      - postgres
 
   payment-service:
     image: payment-service:latest
     container_name: payment-service
     build:
-      context: ../payment_service
+      context: ../payment-service
       dockerfile: Dockerfile
     command: >
-      uvicorn api.main:app --host 0.0.0.0 --port 8004
+      uvicorn api.main:app --host 0.0.0.0 --port ${PAYMENT_SERVICE_PORT}
     volumes:
-      - ../payment_service:/app
+      - ../payment-service:/app
     ports:
-      - "8004:8004"
+      - "${PAYMENT_SERVICE_PORT}:${PAYMENT_SERVICE_PORT}"
     env_file:
       - .env
     depends_on:
-      - database
-      - rabbitmq
+      - postgres
 
   notification-service:
     image: notification-service:latest
@@ -107,22 +98,18 @@ services:
     depends_on:
       - database
 
-
-#  kong:
-#    image: kong:3.4
-#    container_name: api-gateway-kong
-#    restart: unless-stopped
-#    ports:
-#      - "8000:8000"     # Proxy (HTTP)
-#      - "8001:8001"     # Admin API (HTTP)
-#      - "8443:8443"     # Proxy (HTTPS)
-#      - "8444:8444"     # Admin API (HTTPS)
-#    environment:
-#      KONG_DATABASE: "off" # tryb bez bazy danych
-#      KONG_DECLARATIVE_CONFIG: /kong/kong.yml
-#      KONG_LOG_LEVEL: debug
-#    volumes:
-#      - ./kong/kong.yml:/kong/kong.yml
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"     # Port do komunikacji aplikacyjnej (AMQP)
+      - "15672:15672"   # Port do UI (RabbitMQ Management)
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      RABBITMQ_LOAD_DEFINITIONS: /etc/rabbitmq/definitions.json
+    volumes:
+      - ./rabbitmq_definitions.json:/etc/rabbitmq/definitions.json
 
 volumes:
-  database_data:
+  postgres_data:

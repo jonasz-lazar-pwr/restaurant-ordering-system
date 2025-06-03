@@ -4,17 +4,19 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    DB_HOST: str
-    DB_NAME: str
-    DB_USER: str
-    DB_PASSWORD: str
-    DB_PORT: str
-    AUTH_SERVICE_DB_SCHEMA: str
+    AUTH_SERVICE_HOST: str = "auth-service"
+    AUTH_SERVICE_PORT: int
 
+    ORDER_SERVICE_HOST: str = "order-service"
+    ORDER_SERVICE_PORT: int
+
+    PAYMENT_SERVICE_HOST: str = "payment-service"
+    PAYMENT_SERVICE_PORT: int
+
+    SECRET_KEY: str
+    JWT_ALGORITHM: str = "HS256"
     JWT_AUDIENCE: str
     JWT_ISSUER: str
-    JWT_LIFETIME_SECONDS: int
-    SECRET_KEY: str
 
     CORS_ALLOW_ORIGINS: str
 
