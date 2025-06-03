@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+boto3
+python-dotenv
+pydantic-settings==2.9.1
