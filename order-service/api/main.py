@@ -1,5 +1,11 @@
 # === api/main.py ===
 
+"""Main application entrypoint for the Order Service.
+
+This file initializes the FastAPI application, configures RabbitMQ consumers
+on service startup, and includes all relevant routers and middleware.
+"""
+
 import aio_pika
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
@@ -16,6 +22,15 @@ background_tasks = []
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    """Application lifespan context for startup and shutdown routines.
+
+    This function initializes the connection to RabbitMQ,
+    sets up queue consumers for selected order statuses, and
+    gracefully shuts down the connection on application termination.
+
+    Args:
+        _app (FastAPI): The FastAPI application instance.
+    """
     global background_tasks
 
     print("Starting up Order Service...")
@@ -25,7 +40,7 @@ async def lifespan(_app: FastAPI):
 
     statuses_to_handle = [
         OrderStatus.paid,
-        # możesz dodać więcej później
+        # Add additional statuses here if needed
     ]
 
     for status in statuses_to_handle:
@@ -34,7 +49,6 @@ async def lifespan(_app: FastAPI):
         handler = get_handler_for_status(status)
 
         await queue.consume(handler)
-
         print(f"Listening on queue '{queue_name}'...")
 
     yield
@@ -42,6 +56,7 @@ async def lifespan(_app: FastAPI):
     print("Shutting down Order Service...")
     for task in background_tasks:
         task.cancel()
+
     await connection.close()
 
 
@@ -58,15 +73,17 @@ app = FastAPI(
 # Apply global middleware
 add_middleware(app)
 
+
 @app.get(
     "/order/health",
     summary="Health check",
-    description="Basic health check endpoint",
+    description="Returns a simple health status of the Order Service.",
     tags=["Health"]
 )
 def health_check():
-    """Simple health check endpoint that returns 200 OK."""
+    """Returns health status of the service."""
     return {"status": "ok"}
+
 
 # Register routers
 app.include_router(scan_router, prefix="/order", tags=["Scan"])
