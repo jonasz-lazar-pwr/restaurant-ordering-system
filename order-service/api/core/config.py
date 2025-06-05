@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    # Database settings
     DB_HOST: str
     DB_NAME: str
     DB_USER: str
@@ -11,8 +12,18 @@ class Settings(BaseSettings):
     DB_PORT: str
     ORDER_SERVICE_DB_SCHEMA: str
 
+    # RabbitMQ settings
     RABBITMQ_URL: str
+    PAYMENTS_EXCHANGE_NAME: str
+    ROUTING_KEY_PAYMENT_INITIATED: str
+    NOTIFICATIONS_EXCHANGE_NAME: str
 
+    # JWT settings
+    JWT_AUDIENCE: str
+    JWT_ISSUER: str
+    JWT_SECRET_KEY: str
+
+    # Other settings
     CORS_ALLOW_ORIGINS: str
 
     model_config = SettingsConfigDict(
