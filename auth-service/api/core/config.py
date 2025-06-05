@@ -9,13 +9,13 @@ class Settings(BaseSettings):
     DB_USER: str
     DB_PASSWORD: str
     DB_PORT: str
-    AUTH_SERVICE_DB_SCHEMA: str
 
     JWT_AUDIENCE: str
     JWT_ISSUER: str
     JWT_LIFETIME_SECONDS: int
-    SECRET_KEY: str
+    JWT_SECRET_KEY: str
 
+    AUTH_SERVICE_DB_SCHEMA: str
     CORS_ALLOW_ORIGINS: str
 
     model_config = SettingsConfigDict(

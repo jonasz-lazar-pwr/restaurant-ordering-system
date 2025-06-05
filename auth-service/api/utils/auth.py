@@ -1,4 +1,4 @@
-# api/core/auth.py
+# api/utils/auth.py
 
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict
@@ -36,7 +36,7 @@ class CustomJWTStrategy(JWTStrategy):
 # JWT strategy factory
 def get_jwt_strategy() -> CustomJWTStrategy:
     return CustomJWTStrategy(
-        secret=settings.SECRET_KEY,
+        secret=settings.JWT_SECRET_KEY,
         lifetime_seconds=settings.JWT_LIFETIME_SECONDS,
         token_audience=[settings.JWT_AUDIENCE],
     )

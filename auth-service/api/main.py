@@ -3,10 +3,11 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from api.core.middleware import add_middleware
-from api.core.users import fastapi_users
+from api.utils.users import fastapi_users
 from api.schemas.user import UserRead, UserCreate
-from api.core.auth import auth_backend
+from api.utils.auth import auth_backend
 from fastapi_users.authentication import BearerTransport
+
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
@@ -14,13 +15,15 @@ async def lifespan(_app: FastAPI):
     yield
     print("Shutting down Auth Service...")
 
+
 app = FastAPI(
     title="Auth Service",
     description="Auth Service for managing user authentication and registration.",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    openapi_url="/openapi.json"
+    openapi_url="/openapi.json",
+    lifespan=lifespan
 )
 
 # Apply global middleware

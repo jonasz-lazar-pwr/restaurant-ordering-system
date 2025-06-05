@@ -10,8 +10,8 @@ from uuid import UUID
 
 # Custom user manager with token secrets
 class UserManager(UUIDIDMixin, BaseUserManager[User, UUID]):
-    reset_password_token_secret = settings.SECRET_KEY
-    verification_token_secret = settings.SECRET_KEY
+    reset_password_token_secret = settings.JWT_SECRET_KEY
+    verification_token_secret = settings.JWT_SECRET_KEY
 
 
 # Dependency to inject the user manager
