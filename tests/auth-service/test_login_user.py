@@ -1,7 +1,6 @@
-# tests/auth-service/test_login_user.py
+# === tests/auth-service/test_login_user.py ===
 
-"""
-Tests for the /auth/jwt/login endpoint of the Auth Service.
+"""Tests for the /auth/jwt/login endpoint of the Auth Service.
 
 These tests verify authentication with valid and invalid credentials,
 as well as error handling for missing fields.
@@ -9,24 +8,23 @@ as well as error handling for missing fields.
 
 import pytest
 import httpx
-import uuid
-from config import get_base_url
+from config import get_base_url, AUTH_ENDPOINTS
+from utils import generate_unique_user
 
-BASE_URL = get_base_url("auth-service")
-LOGIN_ENDPOINT = "/auth/jwt/login"
-REGISTER_ENDPOINT = "/auth/register"
-
-
-def generate_unique_email() -> str:
-    """Generate a unique email address for test user registration."""
-    return f"testuser_{uuid.uuid4().hex}@example.com"
+AUTH_BASE_URL = get_base_url("auth-service")
 
 
 @pytest.mark.asyncio
 async def test_login_valid_user():
-    """Log in with correct credentials and expect 200 OK with access token."""
-    email = generate_unique_email()
-    password = "SecureP@ssw0rd"
+    """
+    Log in with correct credentials and expect 200 OK with access token.
+
+    Flow:
+        - Register a new user
+        - Log in using valid credentials
+        - Verify response contains access_token and token_type
+    """
+    email, password = generate_unique_user()
 
     registration_payload = {
         "email": email,
@@ -41,9 +39,9 @@ async def test_login_valid_user():
         "password": password
     }
 
-    async with httpx.AsyncClient(base_url=BASE_URL) as client:
-        await client.post(REGISTER_ENDPOINT, json=registration_payload)
-        response = await client.post(LOGIN_ENDPOINT, data=login_data)
+    async with httpx.AsyncClient(base_url=AUTH_BASE_URL) as client:
+        await client.post(AUTH_ENDPOINTS["register"], json=registration_payload)
+        response = await client.post(AUTH_ENDPOINTS["login"], data=login_data)
 
     assert response.status_code == 200
     json_data = response.json()
@@ -53,22 +51,26 @@ async def test_login_valid_user():
 
 @pytest.mark.asyncio
 async def test_login_invalid_password():
-    """Try to log in with a valid email but wrong password. Expect 400 Bad Request."""
-    email = generate_unique_email()
-    correct_password = "CorrectP@ss123"
+    """
+    Try to log in with a valid email but incorrect password.
+
+    Expected:
+        HTTP 400 Bad Request.
+    """
+    email, password = generate_unique_user()
     wrong_password = "WrongPassword123"
 
     registration_payload = {
         "email": email,
-        "password": correct_password,
+        "password": password,
         "first_name": "John",
         "last_name": "Doe",
         "role": "client"
     }
 
-    async with httpx.AsyncClient(base_url=BASE_URL) as client:
-        await client.post(REGISTER_ENDPOINT, json=registration_payload)
-        response = await client.post(LOGIN_ENDPOINT, data={
+    async with httpx.AsyncClient(base_url=AUTH_BASE_URL) as client:
+        await client.post(AUTH_ENDPOINTS["register"], json=registration_payload)
+        response = await client.post(AUTH_ENDPOINTS["login"], data={
             "username": email,
             "password": wrong_password
         })
@@ -78,23 +80,33 @@ async def test_login_invalid_password():
 
 @pytest.mark.asyncio
 async def test_login_nonexistent_user():
-    """Try to log in with a non-existent email. Expect 400 Bad Request."""
-    email = generate_unique_email()
+    """
+    Try to log in with an email that was never registered.
+
+    Expected:
+        HTTP 400 Bad Request.
+    """
+    email, _ = generate_unique_user()
     data = {
         "username": email,
         "password": "AnyPassword123"
     }
 
-    async with httpx.AsyncClient(base_url=BASE_URL) as client:
-        response = await client.post(LOGIN_ENDPOINT, data=data)
+    async with httpx.AsyncClient(base_url=AUTH_BASE_URL) as client:
+        response = await client.post(AUTH_ENDPOINTS["login"], data=data)
 
     assert response.status_code == 400
 
 
 @pytest.mark.asyncio
 async def test_login_missing_fields():
-    """Try to log in with missing form fields. Expect 422 Unprocessable Entity."""
-    async with httpx.AsyncClient(base_url=BASE_URL) as client:
-        response = await client.post(LOGIN_ENDPOINT, data={})
+    """
+    Try to log in with no form fields provided.
+
+    Expected:
+        HTTP 422 Unprocessable Entity.
+    """
+    async with httpx.AsyncClient(base_url=AUTH_BASE_URL) as client:
+        response = await client.post(AUTH_ENDPOINTS["login"], data={})
 
     assert response.status_code == 422
