@@ -1,25 +1,24 @@
-# tests/staff-service/test_health_check.py
+# === tests/staff-service/test_health_check.py ===
 
-"""
-Tests for the /staff/health endpoint of the Staff Service.
+"""Health check test for the Staff Service.
 
-These tests verify that the health check endpoint responds correctly and confirms
-the service is up and running.
+Verifies that the /staff/health endpoint responds correctly,
+indicating that the service is operational.
 """
 
 import pytest
 import httpx
-from config import get_base_url
+
+from config import get_base_url, STAFF_ENDPOINTS
 
 BASE_URL = get_base_url("staff-service")
-HEALTH_ENDPOINT = "/staff/health"
 
 
 @pytest.mark.asyncio
 async def test_health_check():
-    """Verify that /staff/health returns 200 and the correct response body."""
+    """Send GET to /staff/health → expect 200 OK and status response."""
     async with httpx.AsyncClient(base_url=BASE_URL) as client:
-        response = await client.get(HEALTH_ENDPOINT)
+        response = await client.get(STAFF_ENDPOINTS["health"])
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}

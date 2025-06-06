@@ -16,11 +16,11 @@ import subprocess
 # List of relative paths to individual microservice test runners
 services = [
     # "rabbitmq/run_rabbitmq_tests.py",
-    # "auth-service/run_auth_tests.py",
+    "auth-service/run_auth_tests.py",
     # "order-service/run_order_tests.py",
     # "staff-service/run_staff_tests.py",
     # "payment-service/run_payment_tests.py",
-    "notification-service/run_notification_tests.py",
+    # "notification-service/run_notification_tests.py",
 ]
 
 if __name__ == "__main__":

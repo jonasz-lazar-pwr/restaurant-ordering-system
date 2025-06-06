@@ -38,8 +38,18 @@ ORDER_ENDPOINTS = {
     "health": "/order/health",
 }
 
+STAFF_ENDPOINTS = {
+    "health": "/staff/health",
+    "list_orders": "/staff/orders",
+    "update_order_status": "/staff/orders/{order_id}/status",  # Use format to insert order_id.
+}
+
 NOTIFICATION_ENDPOINTS = {
     "health": "/notification/health",
+}
+
+PAYMENT_ENDPOINTS = {
+    "health": "/payment/health",
 }
 
 
