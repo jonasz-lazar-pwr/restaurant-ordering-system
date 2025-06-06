@@ -11,7 +11,6 @@ consumers:
 services:
   - name: auth-service
     url: http://auth-service:8002
-
     routes:
       # Public route for health check
       - name: auth-health-route
@@ -46,7 +45,6 @@ services:
 
   - name: order-service
     url: http://order-service:8003
-
     routes:
       # Public route for health check
       - name: order-health-route
@@ -69,7 +67,6 @@ services:
 
   - name: staff-service
     url: http://staff-service:8004
-
     routes:
       # Public route for health check
       - name: staff-health-route
@@ -91,7 +88,7 @@ services:
               secret_is_base64: false
 
   - name: payment-service
-    url: http://payment-service:8004
+    url: http://payment-service:8005
     routes:
       - name: payment-route
         paths:
@@ -106,8 +103,14 @@ services:
               secret_is_base64: false
 
   - name: notification-service
-    url: http://notification-service:8005
+    url: http://notification-service:8006
     routes:
+      # Public route for health check
+      - name: notification-health-route
+        paths:
+          - /notification/health
+        strip_path: false
+
       - name: notification-route
         paths:
           - /notification

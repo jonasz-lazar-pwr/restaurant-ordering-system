@@ -3,3 +3,4 @@ docker-compose down -v
 
 docker-compose exec auth-service sh -c "PYTHONPATH=/app python api/db/init_db.py"
 docker-compose exec order-service sh -c "PYTHONPATH=/app python api/db/init_db.py"
+docker-compose exec notification-service sh -c "PYTHONPATH=/app python api/db/init_db.py"

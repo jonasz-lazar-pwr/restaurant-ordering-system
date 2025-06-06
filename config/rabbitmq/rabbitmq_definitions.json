@@ -7,9 +7,7 @@
       "tags": "administrator"
     }
   ],
-  "vhosts": [
-    { "name": "/" }
-  ],
+  "vhosts": [{ "name": "/" }],
   "permissions": [
     {
       "user": "admin",
@@ -20,83 +18,9 @@
     }
   ],
   "queues": [
-    { "name": "payment.initiated", "vhost": "/", "durable": true },
-    { "name": "order.paid", "vhost": "/", "durable": true },
-    { "name": "order.cancelled", "vhost": "/", "durable": true },
-    { "name": "order.in_progress", "vhost": "/", "durable": true },
-    { "name": "order.ready", "vhost": "/", "durable": true },
-    { "name": "order.delivered", "vhost": "/", "durable": true },
-    { "name": "order.failed", "vhost": "/", "durable": true },
-    { "name": "user.created", "vhost": "/", "durable": true }
-  ],
-  "exchanges": [
-    { "name": "payments_exchange", "vhost": "/", "type": "direct", "durable": true },
-    { "name": "notifications_exchange", "vhost": "/", "type": "direct", "durable": true }
-  ],
-  "bindings": [
-    {
-      "source": "payments_exchange",
-      "vhost": "/",
-      "destination": "payment.initiated",
-      "destination_type": "queue",
-      "routing_key": "payment.initiated",
-      "arguments": {}
-    },
-    {
-      "source": "notifications_exchange",
-      "vhost": "/",
-      "destination": "order.paid",
-      "destination_type": "queue",
-      "routing_key": "order.paid",
-      "arguments": {}
-    },
-    {
-      "source": "notifications_exchange",
-      "vhost": "/",
-      "destination": "order.cancelled",
-      "destination_type": "queue",
-      "routing_key": "order.cancelled",
-      "arguments": {}
-    },
-    {
-      "source": "notifications_exchange",
-      "vhost": "/",
-      "destination": "order.in_progress",
-      "destination_type": "queue",
-      "routing_key": "order.in_progress",
-      "arguments": {}
-    },
-    {
-      "source": "notifications_exchange",
-      "vhost": "/",
-      "destination": "order.ready",
-      "destination_type": "queue",
-      "routing_key": "order.ready",
-      "arguments": {}
-    },
-    {
-      "source": "notifications_exchange",
-      "vhost": "/",
-      "destination": "order.delivered",
-      "destination_type": "queue",
-      "routing_key": "order.delivered",
-      "arguments": {}
-    },
-    {
-      "source": "notifications_exchange",
-      "vhost": "/",
-      "destination": "order.failed",
-      "destination_type": "queue",
-      "routing_key": "order.failed",
-      "arguments": {}
-    },
-    {
-      "source": "notifications_exchange",
-      "vhost": "/",
-      "destination": "user.created",
-      "destination_type": "queue",
-      "routing_key": "user.created",
-      "arguments": {}
-    }
+    { "name": "order_service_queue", "vhost": "/", "durable": true },
+    { "name": "staff_service_queue", "vhost": "/", "durable": true },
+    { "name": "payment_service_queue", "vhost": "/", "durable": true },
+    { "name": "notification_service_queue", "vhost": "/", "durable": true }
   ]
 }
