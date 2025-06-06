@@ -1,4 +1,4 @@
-# tests/notification-service/run_notification_tests.py
+# === tests/notification-service/run_notification_tests.py ===
 
 """Test runner for the Notification Service.
 

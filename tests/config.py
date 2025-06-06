@@ -38,6 +38,10 @@ ORDER_ENDPOINTS = {
     "health": "/order/health",
 }
 
+NOTIFICATION_ENDPOINTS = {
+    "health": "/notification/health",
+}
+
 
 def get_base_url(service_name: str) -> str:
     """Resolve the base URL for a given service.
@@ -65,16 +69,11 @@ def get_base_url(service_name: str) -> str:
 
 
 # === RabbitMQ Configuration ===
-
 RABBITMQ_URL = "amqp://admin:admin@localhost:5672/"
 
-# RabbitMQ exchange names
-PAYMENTS_EXCHANGE_NAME = "payments_exchange"
-NOTIFICATIONS_EXCHANGE_NAME = "notifications_exchange"
 
-# RabbitMQ routing keys for event types
-ROUTING_KEY_USER_CREATED = "user.created"
-ROUTING_KEY_PAYMENT_INITIATED = "payment.initiated"
-ROUTING_KEY_ORDER_PAID = "order.paid"
-ROUTING_KEY_ORDER_CANCELLED = "order.cancelled"
-ROUTING_KEY_ORDER_FAILED = "order.failed"
+# === RabbitMQ queues ===
+ORDER_QUEUE = "order_service_queue"
+STAFF_QUEUE = "staff_service_queue"
+PAYMENT_QUEUE = "payment_service_queue"
+NOTIFICATION_QUEUE = "notification_service_queue"

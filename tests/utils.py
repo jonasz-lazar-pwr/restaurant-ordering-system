@@ -1,5 +1,20 @@
 # === tests/utils.py ===
-"""Utility functions for integration tests involving RabbitMQ and user identity."""
+
+"""RabbitMQ and identity utilities for integration testing.
+
+This module provides helper functions for:
+- Publishing messages to RabbitMQ queues (via default exchange)
+- Consuming and parsing messages from queues
+- Purging queues before tests
+- Generating unique test users
+
+These functions are used in integration tests across services
+(e.g., order-service → payment-service / notification-service).
+
+Dependencies:
+    - aio_pika: Async RabbitMQ client
+    - config.RABBITMQ_URL: Defined AMQP connection URL
+"""
 
 import uuid
 import json
@@ -9,77 +24,76 @@ from config import RABBITMQ_URL
 
 
 def generate_unique_user() -> tuple[str, str]:
-    """Generate a unique email and password for test user registration.
+    """Generate a unique email and password for user registration tests.
 
     Returns:
-        tuple[str, str]: A tuple containing (email, password).
+        tuple[str, str]: A tuple (email, password) with randomized email address.
     """
     unique_id = uuid.uuid4().hex[:8]
-    email = f"user_{unique_id}@test.com"
-    password = "StrongTestPassword123!"
-    return email, password
+    return f"user_{unique_id}@test.com", "StrongTestPassword123!"
 
 
-async def publish_message_to_exchange(
-    exchange_name: str, routing_key: str, message_body: dict
-) -> None:
-    """Publish a message to a RabbitMQ exchange with the specified routing key.
+async def publish_message_to_queue(queue_name: str, message_body: dict) -> None:
+    """Publish a JSON-serializable message to a RabbitMQ queue.
 
-    Assumes the exchange exists (e.g., defined via RabbitMQ definitions).
+    Messages are published via the default exchange using the queue name as routing key.
 
     Args:
-        exchange_name (str): Name of the RabbitMQ exchange.
-        routing_key (str): Routing key to use for message delivery.
-        message_body (dict): The JSON-serializable message payload.
+        queue_name (str): Name of the RabbitMQ queue (used as routing key).
+        message_body (dict): Message payload to serialize and publish.
+
+    Raises:
+        aio_pika.exceptions.AMQPException: On connection or publishing error.
     """
     connection = await aio_pika.connect_robust(RABBITMQ_URL)
     async with connection:
         channel = await connection.channel()
-        exchange = await channel.get_exchange(exchange_name, ensure=False)
-        await exchange.publish(
-            aio_pika.Message(body=json.dumps(message_body).encode()),
-            routing_key=routing_key
-        )
+        message = aio_pika.Message(body=json.dumps(message_body).encode())
+        await channel.default_exchange.publish(message, routing_key=queue_name)
 
 
 async def consume_one_message_from_queue(
     queue_name: str, timeout: int = 7
 ) -> dict | None:
-    """Consume a single message from the specified RabbitMQ queue.
+    """Consume a single message from a RabbitMQ queue.
 
-    Acknowledges the message upon receipt and returns its decoded payload.
+    If a message is available within the timeout window, it is acknowledged
+    and returned as a parsed JSON dictionary.
 
     Args:
         queue_name (str): The name of the queue to consume from.
-        timeout (int): Timeout in seconds for message availability.
+        timeout (int, optional): Timeout in seconds (default is 7).
 
     Returns:
-        dict | None: Parsed JSON message body, or None if no message was received.
+        dict | None: Parsed message body if received, else None.
+
+    Raises:
+        aio_pika.exceptions.AMQPException: On channel or queue error.
     """
     connection = await aio_pika.connect_robust(RABBITMQ_URL)
     async with connection:
         channel = await connection.channel()
         queue = await channel.get_queue(queue_name, ensure=False)
         try:
-            incoming_message: aio_pika.abc.AbstractIncomingMessage = await queue.get(
-                timeout=timeout, fail=False
-            )
-            if incoming_message:
-                await incoming_message.ack()
-                return json.loads(incoming_message.body.decode())
-            return None
+            incoming = await queue.get(timeout=timeout, fail=False)
+            if incoming:
+                await incoming.ack()
+                return json.loads(incoming.body.decode())
         except Exception:
-            return None
+            pass
+        return None
 
 
 async def purge_queue_if_exists(queue_name: str) -> None:
-    """Purge all messages from the specified queue if it exists.
+    """Delete all messages from a RabbitMQ queue if it exists.
+
+    This is used to ensure test isolation and clean state for each test case.
 
     Args:
         queue_name (str): The name of the queue to purge.
 
-    Notes:
-        Logs a warning if the queue does not exist or cannot be accessed.
+    Raises:
+        aio_pika.exceptions.AMQPException: On connection or purge failure.
     """
     connection = await aio_pika.connect_robust(RABBITMQ_URL)
     async with connection:
@@ -87,8 +101,8 @@ async def purge_queue_if_exists(queue_name: str) -> None:
         try:
             queue = await channel.get_queue(queue_name, ensure=False)
             await queue.purge()
-            print(f"Purged queue: {queue_name}")
-        except aio_pika.exceptions.ChannelClosedOnStartup:
-            print(f"Queue {queue_name} does not exist or cannot be accessed, skipping purge.")
+            print(f"[✔] Purged queue: {queue_name}")
+        except aio_pika.exceptions.AMQPException as e:
+            print(f"[!] AMQP error while purging '{queue_name}': {e}")
         except Exception as e:
-            print(f"Error purging queue {queue_name}: {e}")
+            print(f"[!] Unexpected error while purging '{queue_name}': {e}")
