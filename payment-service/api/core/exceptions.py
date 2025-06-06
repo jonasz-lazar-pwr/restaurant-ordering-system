@@ -1,11 +1,18 @@
+# === api/core/exceptions.py ===
+
+"""Custom exception classes for handling PayU-related errors."""
+
+
 class PayUError(Exception):
-    """Basic communication error with PayU."""
+    """Base exception for PayU communication errors."""
     pass
+
 
 class TokenError(PayUError):
-    """Token acquisition error."""
+    """Exception raised when obtaining an authentication token fails."""
     pass
 
+
 class OrderError(PayUError):
-    """Error in order related operation."""
+    """Exception raised for errors related to PayU order operations."""
     pass
