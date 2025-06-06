@@ -29,10 +29,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from api.db.deps import get_db
+from api.core.config import settings
 from api.models import MenuItem, Order, OrderItem, OrderStatus, TableSession
 from api.schemas.order import OrderRequest, OrderResponse, OrderListResponse, OrderSummary, OrderDeletedOut
 from api.utils.auth import extract_user_info
-from api.utils.rabbitmq import send_order_to_payment, send_order_status_notification
+from api.workers.producer import send_order_to_payment, send_order_status_notification
 
 router = APIRouter()
 
@@ -109,7 +110,18 @@ async def order_item(
     await db.commit()
     await db.refresh(db_order)
 
-    await send_order_to_payment(db_order.id)
+    await send_order_to_payment(
+        order_id=db_order.id,
+        db=db,
+        buyer_info={
+            "email": user_info["email"],
+            "phone": settings.DEFAULT_PHONE_NUMBER,
+            "firstName": user_info.get("first_name"),
+            "lastName": user_info.get("last_name"),
+            "language": settings.DEFAULT_LANGUAGE
+        },
+        customer_ip=settings.DEFAULT_CUSTOMER_IP
+    )
 
     return OrderResponse(
         message=f"Order placed successfully by {user_email} for table {table_number}.",
@@ -237,6 +249,10 @@ async def cancel_order(
     await db.commit()
     await db.refresh(order)
 
-    await send_order_status_notification(order.id, order.status.value)
+    await send_order_status_notification(
+        order_id=order.id,
+        new_status=order.status.value,
+        email=user_info["email"]
+    )
 
     return OrderDeletedOut(message="Order cancelled successfully", order_id=order.id)
