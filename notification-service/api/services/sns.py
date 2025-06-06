@@ -1,21 +1,38 @@
+# === api/services/sns.py ===
+
+"""
+SNS service.
+
+Provides a function to send notifications to the configured AWS SNS topic.
+"""
+
 import boto3
-from botocore.exceptions import ClientError
+from botocore.client import BaseClient
 from api.core.config import settings
 
-sns_client = boto3.client(
+# Instantiate the SNS client eagerly at module load time
+sns_client: BaseClient = boto3.client(
     "sns",
-    aws_access_key_id=settings.aws_access_key_id,
-    aws_secret_access_key=settings.aws_secret_access_key,
-    region_name=settings.aws_region,
+    region_name=settings.AWS_REGION,
+    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+    aws_session_token=settings.AWS_SESSION_TOKEN,
 )
 
-def publish_notification(message: str, subject: str = "Notification"):
-    try:
-        response = sns_client.publish(
-            TopicArn=settings.sns_topic_arn,
-            Message=message,
-            Subject=subject
-        )
-        return {"message_id": response["MessageId"]}
-    except ClientError as e:
-        return {"error": str(e)}
+
+def send_notification_to_sns(recipient_email: str, message: str) -> dict:
+    """
+    Publishes a notification message to the SNS topic.
+
+    Args:
+        recipient_email (str): Email address of the notification recipient.
+        message (str): Notification message body.
+
+    Returns:
+        dict: Response from AWS SNS publish operation.
+    """
+    return sns_client.publish(
+        TopicArn=settings.AWS_SNS_TOPIC_ARN,
+        Message=message,
+        Subject=f"New notification for {recipient_email}"
+    )

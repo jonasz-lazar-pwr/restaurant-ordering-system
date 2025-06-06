@@ -298,5 +298,11 @@ atlassian-ide-plugin.xml
 # Structurizr local cache and settings
 .structurizr/
 auth-service/.dockerignore
-auth-service/.dockerignore
 auth-service/api/core/config.py
+
+*.pem
+.terraform/
+*.hcl
+*.tfstate
+*.tfstate.backup
+*.tfvars
