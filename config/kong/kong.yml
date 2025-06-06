@@ -90,6 +90,13 @@ services:
   - name: payment-service
     url: http://payment-service:8005
     routes:
+      # Public route for health check
+      - name: payment-health-route
+        paths:
+          - /payment/health
+        strip_path: false
+
+      # All other /payment paths require JWT
       - name: payment-route
         paths:
           - /payment

@@ -106,9 +106,12 @@ services:
     env_file:
       - .env
     depends_on:
-      - postgres
-      - rabbitmq
-      - kong
+      postgres:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+      kong:
+        condition: service_started
 
   payment-service:
     image: payment-service:latest
@@ -125,9 +128,12 @@ services:
     env_file:
       - .env
     depends_on:
-      - postgres
-      - rabbitmq
-      - kong
+      postgres:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+      kong:
+        condition: service_started
 
   notification-service:
     image: notification-service:latest
@@ -144,9 +150,12 @@ services:
     env_file:
       - .env
     depends_on:
-      - postgres
-      - rabbitmq
-      - kong
+      postgres:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+      kong:
+        condition: service_started
 
 volumes:
   postgres_data:
