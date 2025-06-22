@@ -9,7 +9,7 @@ class Payment(Base):
     __table_args__ = {"schema": settings.PAYMENT_SERVICE_DB_SCHEMA}
 
     id = Column(Integer, primary_key=True, index=True)
-    # order_id = Column(String, unique=True, index=True, nullable=False)
+    order_id = Column(String, unique=True, index=True, nullable=False)
     payu_order_id = Column(String, unique=True, nullable=False)
     amount = Column(String, nullable=False)
     currency = Column(String, nullable=False)

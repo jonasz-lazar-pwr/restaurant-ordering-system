@@ -15,6 +15,7 @@ def build_payment_payload(
     order_items: List[OrderItem],
     menu_items: Dict[int, MenuItem],
     buyer: Dict[str, Any],
+    order_id: str,
     customer_ip: str,
     notify_url: str
 ) -> Dict[str, Any]:
@@ -53,6 +54,7 @@ def build_payment_payload(
         "totalAmount": str(total_amount),
         "buyer": buyer,
         "products": products,
+        "orderId": str(order_id),
         "tableNumber": str(order.table_number),
         "userId": str(order.user_id)
     }

@@ -37,6 +37,7 @@ class CreatePaymentRequest(BaseModel):
     totalAmount: str = Field(..., description="Total amount of the order in minor currency unit (e.g., grosze).")
     buyer: Buyer = Field(..., description="Information about the buyer.")
     products: List[Product] = Field(..., description="List of products in the order.")
+    orderId: str = Field(..., description="ID corresponding to order in order-service.")
     tableNumber: str = Field(..., description="Number of the table from which the order was made.")
     userId: str = Field(..., description="Customer's unique ID.")
 

@@ -73,6 +73,7 @@ async def handle_payment_message(
                 # Zapis do bazy danych
                 # Konwersja typów z CreatePaymentRequest (stringi) do modelu Payment (int, UUID)
                 new_payu_payment = Payment(
+                    order_id = payment.orderId,
                     payu_order_id = response.get('orderId'),
                     amount = payment.totalAmount,
                     currency = payment.currencyCode,
@@ -102,7 +103,7 @@ async def handle_payment_message(
                     )
                 
             elif event_type == "cancel_payment_request":
-                order_service_order_id = payload.get("order_service_order_id") # <----- TO JEDNAK POTRZEABNE, USER I TABLE MOGĄ MIEĆ KILKA ZAMÓWIEŃ
+                order_id = payload.get("order_service_order_id") # <----- TO JEDNAK POTRZEBNE, USER I TABLE MOGĄ MIEĆ KILKA ZAMÓWIEŃ
                 table_number = payload.get("table_number")
                 user_id = payload.get("user_id")
 
@@ -111,11 +112,12 @@ async def handle_payment_message(
                         await message.nack(requeue=False)
                         return
 
-                print(f"[PaymentConsumer] Processing 'cancel_payment_request' for table: {table_number}, user: {user_id}")
+                print(f"[PaymentConsumer] Processing 'cancel_payment_request' for order_id: {order_id}, table: {table_number}, user: {user_id}")
 
                  # === TUTAJ SZUKAMY PAYU_ORDER_ID W NASZEJ BAZIE ===
                 payment_record_result = await session.execute(
                     select(Payment).where(
+                        Payment.order_id == str(order_id),
                         Payment.table_number == str(table_number),
                         Payment.user_id == str(user_id)
                     )
@@ -142,6 +144,9 @@ async def handle_payment_message(
                     payment_record = payment_record_result.scalar_one_or_none()
 
                     if payment_record:
+                        #
+                        # ========= ZAKTUALIZOWAĆ W ZALEŻNOŚCI OD ZMIANY STATUSÓW W BAZIE
+                        #
                         if payment_record.status == "COMPLETED":
                             # Jeśli płatność była COMPLETED, anulowanie w PayU oznacza refund.
                             # PayU potwierdza refund asynchronicznie, więc na razie ustawiamy status prośby.
@@ -161,6 +166,78 @@ async def handle_payment_message(
                     # Możesz zapisać status jako 'CANCELLATION_FAILED_PAYU' w DB
                     if payment_record: # Jeśli znalazłeś rekord, zaktualizuj jego status błędu
                          payment_record.status = "CANCELLATION_FAILED_PAYU"
+                         await session.commit()
+                         await session.refresh(payment_record)
+                    raise # Rethrow, żeby wiadomość mogła być ponownie przetworzona
+
+            elif event_type == "refund_payment_request":
+                order_id = payload.get("order_service_order_id") # <----- TO JEDNAK POTRZEBNE, USER I TABLE MOGĄ MIEĆ KILKA ZAMÓWIEŃ
+                table_number = payload.get("table_number")
+                user_id = payload.get("user_id")
+
+                if not all([table_number, user_id]):
+                        print(f"[!] 'refund_payment_request' received with missing data. Payload: {payload}. Ignoring and NACKing.")
+                        await message.nack(requeue=False)
+                        return
+
+                print(f"[PaymentConsumer] Processing 'refund_payment_request' for order_id: {order_id}, table: {table_number}, user: {user_id}")
+
+                 # === TUTAJ SZUKAMY PAYU_ORDER_ID W NASZEJ BAZIE ===
+                payment_record_result = await session.execute(
+                    select(Payment).where(
+                        Payment.order_id == str(order_id),
+                        Payment.table_number == str(table_number),
+                        Payment.user_id == str(user_id)
+                    )
+                )
+                payment_record = payment_record_result.scalar_one_or_none()
+
+                if not payment_record:
+                    print(f"[PaymentConsumer] Payment record not found in DB. Cannot refund.")
+                    await message.ack() # Potwierdź, bo nic więcej nie możemy zrobić
+                    return
+                
+                payu_order_id = payment_record.payu_order_id
+                print(f"[PaymentConsumer] Found PayU order ID: {payu_order_id} for refund.")
+
+                try:
+                    refund_data = {
+                        "refund": {
+                            "description" : payload.get("reason"),
+                            "currencyCode" : "PLN"
+                        }
+                    }
+                    payu_refund_response = payu_client.refund_order(payu_order_id, refund_data)
+                    print(f"[PaymentConsumer] PayU cancellation response for {payu_order_id}: {payu_refund_response}")
+
+                    # Zaktualizuj status w lokalnej bazie danych payment-service
+                    payment_record_result = await session.execute(
+                        select(Payment).where(Payment.payu_order_id == payu_order_id)
+                    )
+                    payment_record = payment_record_result.scalar_one_or_none()
+
+                    if payment_record:
+                        #
+                        # ========= ZAKTUALIZOWAĆ W ZALEŻNOŚCI OD ZMIANY STATUSÓW W BAZIE
+                        #
+                        # if payment_record.status == "COMPLETED":
+                        #     payment_record.status = "REFUNDED"
+                        #     print(f"[PaymentConsumer] Payment {payu_order_id} marked as REFUNDED locally.")
+                        # else:
+                        #     # Inne statusy (NEW, PENDING, ...) nie mogą być zrefundowane.
+                        #     print(f"[PaymentConsumer] Payment {payu_order_id} cannot be REFUNDED due to its current status.")
+                        payment_record.status = "REFUNDED"
+                        print(f"[PaymentConsumer] Payment {payu_order_id} marked as REFUNDED locally.")
+                        await session.commit()
+                        await session.refresh(payment_record)
+                    else:
+                        print(f"[PaymentConsumer] Payment record for PayU order ID {payu_order_id} not found in DB. PayU refund processed.")
+
+                except OrderError as e:
+                    print(f"[!] PayU client error during refund for {payu_order_id}: {e}")
+                    # Możesz zapisać status jako 'CANCELLATION_FAILED_PAYU' w DB
+                    if payment_record: # Jeśli znalazłeś rekord, zaktualizuj jego status błędu
+                         payment_record.status = "REFUND_FAILED_PAYU"
                          await session.commit()
                          await session.refresh(payment_record)
                     raise # Rethrow, żeby wiadomość mogła być ponownie przetworzona

@@ -43,96 +43,6 @@ import asyncio
 router = APIRouter()
 
 
-# @router.post(
-#     "",
-#     response_model=OrderResponse,
-#     summary="Place an order",
-#     description="Create a new order for a table with one or more menu items."
-# )
-# async def order_item(
-#     order_request: OrderRequest,
-#     db: AsyncSession = Depends(get_db),
-#     authorization: str = Header(...)
-# ) -> OrderResponse:
-#     """Create a new order based on the provided QR code and menu item IDs.
-
-#     Args:
-#         order_request (OrderRequest): Payload containing QR code, menu item IDs, quantities, comment, and payment method.
-#         db (AsyncSession): SQLAlchemy async session.
-#         authorization (str): JWT Bearer token.
-
-#     Returns:
-#         OrderResponse: Confirmation message and order ID.
-
-#     Raises:
-#         HTTPException: If any of the menu items do not exist.
-#     """
-#     user_info: Dict[str, Any] = extract_user_info(authorization)
-#     user_id = user_info["sub"]
-#     user_email = user_info.get("email")
-
-#     item_ids = [item.item_id for item in order_request.items]
-#     result = await db.execute(select(MenuItem).where(MenuItem.id.in_(item_ids)))
-#     menu_items = {item.id: item for item in result.scalars().all()}
-
-#     if len(menu_items) != len(item_ids):
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND,
-#             detail="One or more menu items not found."
-#         )
-
-#     # Find table number from TableSession
-#     session_result = await db.execute(
-#         select(TableSession).where(TableSession.user_id == user_id)
-#     )
-#     session = session_result.scalar_one_or_none()
-#     if not session:
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail="No active table session. Please scan QR code first."
-#         )
-#     table_number = session.table_number
-
-#     db_order = Order(
-#         table_number=table_number,
-#         user_id=user_id,
-#         comment=order_request.comment,
-#         payment_method=order_request.payment_method
-#     )
-
-#     db.add(db_order)
-#     await db.flush()  # Ensure order ID is available before adding items
-
-#     order_items = [
-#         OrderItem(
-#             order_id=db_order.id,
-#             menu_item_id=item.item_id,
-#             quantity=item.quantity
-#         ) for item in order_request.items
-#     ]
-
-#     db.add_all(order_items)
-#     await db.commit()
-#     await db.refresh(db_order)
-
-#     await send_order_to_payment(
-#         order_id=db_order.id,
-#         db=db,
-#         buyer_info={
-#             "email": user_info["email"],
-#             "phone": settings.DEFAULT_PHONE_NUMBER,
-#             "firstName": user_info.get("first_name"),
-#             "lastName": user_info.get("last_name"),
-#             "language": settings.DEFAULT_LANGUAGE
-#         },
-#         customer_ip=settings.DEFAULT_CUSTOMER_IP
-#     )
-
-#     return OrderResponse(
-#         message=f"Order placed successfully by {user_email} for table {table_number}.",
-#         order_id=db_order.id
-#     )
-
 @router.post(
     "",
     response_model=OrderResponse,
@@ -222,6 +132,7 @@ async def order_item(
                 "lastName": user_info.get("last_name"),
                 "language": settings.DEFAULT_LANGUAGE
             },
+            order_id=db_order.id,
             customer_ip=customer_ip,
             notify_url=settings.PAYMENT_NOTIFY_URL
         )
@@ -405,7 +316,7 @@ async def cancel_order(
                 "user_id": str(user_id),
                 "reason": "Order cancelled by user in order-service"
             },
-            routing_key=settings.PAYMENT_QUEUE # <<< TERAZ WYSYŁAMY DO TEJ SAMEJ KOLEJKI
+            routing_key=settings.PAYMENT_QUEUE
         )
     except Exception as e:
         print(f"[OrderService] Failed to publish payment cancellation message for order {order_id}: {e}")
@@ -417,3 +328,68 @@ async def cancel_order(
     )
 
     return OrderDeletedOut(message="Order cancelled successfully", order_id=order.id)
+
+@router.delete(
+    "/refund/{order_id}",
+    response_model=OrderDeletedOut,
+    summary="Refund order",
+    description="Refund an order that already has been paid for."
+)
+async def refund_order(
+    order_id: int,
+    db: AsyncSession = Depends(get_db),
+    authorization: str = Header(...)
+) -> OrderDeletedOut:
+    user_info = extract_user_info(authorization)
+    user_id = user_info["sub"]
+
+    result = await db.execute(select(Order).where(Order.id == order_id))
+    order = result.scalar_one_or_none()
+
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    if order.user_id != user_id:
+        raise HTTPException(status_code=403, detail="You can only cancel your own orders")
+
+    # ======= ODKOMENTOWAĆ, JEŻELI ORDER ZMIENIA STATUS ZAMÓWIENIA NA 'paid'
+    # if order.status != OrderStatus.paid:
+    #     raise HTTPException(status_code=400, detail="Only pending orders can be cancelled")
+
+    order.status = OrderStatus.refunded
+    await db.commit()
+    await db.refresh(order)
+
+    # Find table number from TableSession
+    session_result = await db.execute(
+        select(TableSession).where(TableSession.user_id == user_id)
+    )
+    session = session_result.scalar_one_or_none()
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No active table session. Please scan QR code first."
+        )
+    table_number = session.table_number
+
+    try:
+        await publish_event(
+            event_type="refund_payment_request", # <<< TYP WIADOMOŚCI DLA REFUNDOWANIA
+            payload={
+                "order_service_order_id": order_id,
+                "table_number": str(table_number),
+                "user_id": str(user_id),
+                "reason": "Paid order refunded by user in order-service"
+            },
+            routing_key=settings.PAYMENT_QUEUE
+        )
+    except Exception as e:
+        print(f"[OrderService] Failed to publish payment refund message for order {order_id}: {e}")
+
+    await send_order_status_notification(
+        order_id=order.id,
+        new_status=order.status.value,
+        email=user_info["email"]
+    )
+
+    return OrderDeletedOut(message="Order refunded successfully", order_id=order.id)

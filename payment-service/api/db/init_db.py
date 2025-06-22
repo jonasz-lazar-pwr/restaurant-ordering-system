@@ -17,20 +17,22 @@ async def insert_sample_payments() -> None:
     async with async_session() as session:
         sample_payments = [
             Payment(
+                order_id="00",
                 payu_order_id="payu_001",
                 amount="10000",
                 currency="PLN",
                 status="NEW",
-                table_number = "99",
-                user_id = "99"
+                table_number = "00",
+                user_id = "00"
             ),
             Payment(
+                order_id="01",
                 payu_order_id="payu_002",
                 amount="15050",
                 currency="PLN",
                 status="COMPLETED",
-                table_number = "00",
-                user_id = "00"
+                table_number = "01",
+                user_id = "01"
             ),
         ]
         session.add_all(sample_payments)
