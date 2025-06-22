@@ -1,616 +1,785 @@
 {
   "configuration" : { },
-  "description" : "Model C4 dla Systemu Zamówień",
+  "description" : "System oparty na mikroserwisach do zarządzania zamówieniami w restauracji",
   "documentation" : { },
   "id" : 1,
-  "lastModifiedDate" : "2025-04-10T16:09:47Z",
+  "lastModifiedAgent" : "structurizr-ui",
+  "lastModifiedDate" : "2025-06-22T18:42:58Z",
   "model" : {
     "people" : [ {
-      "description" : "Przegląda menu, składa i opłaca zamówienia, obsługuje płatności, przyjmuje zamówienia i zarządza systemem",
+      "description" : "Osoba składająca zamówienie w restauracji.",
+      "group" : "Restauracja XYZ",
       "id" : "1",
       "location" : "Unspecified",
-      "name" : "Użytkownik",
+      "name" : "Klient",
       "properties" : {
-        "structurizr.dsl.identifier" : "user"
+        "structurizr.dsl.identifier" : "client"
       },
       "relationships" : [ {
-        "description" : "Używa systemu do składania zamówień, zarządzania, etc.",
-        "destinationId" : "5",
-        "id" : "49",
+        "description" : "Używa",
+        "destinationId" : "60",
+        "id" : "63",
         "sourceId" : "1",
         "tags" : "Relationship"
-      }, {
-        "description" : "Wysyła żądania API (REST)",
-        "destinationId" : "6",
-        "id" : "50",
-        "sourceId" : "1",
+      } ],
+      "tags" : "Element,Person"
+    }, {
+      "description" : "Kucharz/Kelner zarządzający zamówieniami.",
+      "group" : "Restauracja XYZ",
+      "id" : "2",
+      "location" : "Unspecified",
+      "name" : "Personel Restauracji",
+      "properties" : {
+        "structurizr.dsl.identifier" : "staff"
+      },
+      "relationships" : [ {
+        "description" : "Używa",
+        "destinationId" : "60",
+        "id" : "64",
+        "sourceId" : "2",
         "tags" : "Relationship"
       } ],
       "tags" : "Element,Person"
     } ],
     "softwareSystems" : [ {
-      "description" : "Wysyła powiadomienia do klientów",
-      "documentation" : { },
-      "id" : "2",
-      "location" : "Unspecified",
-      "name" : "Usługa SMS",
-      "properties" : {
-        "structurizr.dsl.identifier" : "sms_gateway"
-      },
-      "tags" : "Element,Software System"
-    }, {
-      "description" : "Wysyła rachunki elektroniczne do klientów",
-      "documentation" : { },
-      "id" : "3",
-      "location" : "Unspecified",
-      "name" : "Usługa e-mail",
-      "properties" : {
-        "structurizr.dsl.identifier" : "email_gateway"
-      },
-      "tags" : "Element,Software System"
-    }, {
-      "description" : "Obsługuje płatności BLIK, PayU, itp.",
-      "documentation" : { },
-      "id" : "4",
-      "location" : "Unspecified",
-      "name" : "Bramka płatności online",
-      "properties" : {
-        "structurizr.dsl.identifier" : "payment_gateway"
-      },
-      "tags" : "Element,Software System"
-    }, {
       "containers" : [ {
-        "description" : "Routing żądań do mikroserwisów, uwierzytelnianie, autoryzacja",
+        "description" : "Pojedynczy punkt wejścia do systemu.",
         "documentation" : { },
-        "id" : "6",
+        "id" : "4",
         "name" : "API Gateway",
         "properties" : {
-          "structurizr.dsl.identifier" : "system.gateway"
+          "structurizr.dsl.identifier" : "apigateway"
         },
         "relationships" : [ {
-          "description" : "Rejestracja, logowanie, JWT",
-          "destinationId" : "7",
-          "id" : "28",
-          "sourceId" : "6",
-          "tags" : "Relationship"
+          "description" : "Przekierowuje żądania uwierzytelniania",
+          "destinationId" : "5",
+          "id" : "46",
+          "sourceId" : "4",
+          "tags" : "Relationship",
+          "technology" : "HTTPS"
         }, {
-          "description" : "Zarządzanie zamówieniami",
-          "destinationId" : "17",
-          "id" : "29",
-          "sourceId" : "6",
-          "tags" : "Relationship"
+          "description" : "Przekierowuje żądania dot. zamówień",
+          "destinationId" : "13",
+          "id" : "47",
+          "sourceId" : "4",
+          "tags" : "Relationship",
+          "technology" : "HTTPS"
         }, {
-          "description" : "Zamówienia kuchenne",
-          "destinationId" : "18",
-          "id" : "30",
-          "sourceId" : "6",
-          "tags" : "Relationship"
-        }, {
-          "description" : "Rozpoczyna płatność",
-          "destinationId" : "19",
-          "id" : "31",
-          "sourceId" : "6",
-          "tags" : "Relationship"
-        }, {
-          "description" : "Przekazuje żądania HTTP do obsługi przez FastAPI Users",
-          "destinationId" : "8",
-          "id" : "51",
-          "sourceId" : "6",
-          "tags" : "Relationship"
+          "description" : "Przekierowuje żądania personelu",
+          "destinationId" : "28",
+          "id" : "48",
+          "sourceId" : "4",
+          "tags" : "Relationship",
+          "technology" : "HTTPS"
         } ],
-        "tags" : "Element,Container",
+        "tags" : "Element,Container,Gateway",
         "technology" : "Kong"
       }, {
         "components" : [ {
-          "description" : "Obsługuje żądania HTTP dla /auth/* i /users/* używając fastapi-users",
+          "description" : "Obsługuje żądania API dla /auth, /register itd.",
           "documentation" : { },
-          "id" : "8",
-          "name" : "FastAPI Users Routers",
+          "id" : "6",
+          "name" : "Auth Router",
           "properties" : {
-            "structurizr.dsl.identifier" : "system.auth.routers"
+            "structurizr.dsl.identifier" : "authapi"
           },
           "relationships" : [ {
-            "description" : "Używa do rejestracji, pobierania/zarządzania użytkownikami",
-            "destinationId" : "11",
-            "id" : "13",
-            "sourceId" : "8",
-            "tags" : "Relationship",
-            "technology" : "FastAPI dependency injection"
-          }, {
-            "description" : "Używa do logowania, weryfikacji tokenów",
-            "destinationId" : "9",
-            "id" : "14",
-            "sourceId" : "8",
-            "tags" : "Relationship",
-            "technology" : "FastAPI dependency injection"
+            "description" : "Deleguje logikę uwierzytelniania",
+            "destinationId" : "7",
+            "id" : "10",
+            "sourceId" : "6",
+            "tags" : "Relationship"
           } ],
           "tags" : "Element,Component",
-          "technology" : "FastAPI Users"
+          "technology" : "FastAPI Router"
         }, {
-          "description" : "Koordynuje proces uwierzytelniania JWT",
+          "description" : "Logika biznesowa do zarządzania użytkownikami.",
           "documentation" : { },
-          "id" : "9",
-          "name" : "Authentication Backend",
-          "properties" : {
-            "structurizr.dsl.identifier" : "system.auth.authbackend"
-          },
-          "relationships" : [ {
-            "description" : "Deleguje tworzenie/odczyt tokenu",
-            "destinationId" : "10",
-            "id" : "15",
-            "sourceId" : "9",
-            "tags" : "Relationship",
-            "technology" : "Python call"
-          } ],
-          "tags" : "Element,Component",
-          "technology" : "FastAPI Users"
-        }, {
-          "description" : "Generuje i waliduje tokeny JWT z rolą użytkownika",
-          "documentation" : { },
-          "id" : "10",
-          "name" : "Custom JWT Strategy",
-          "properties" : {
-            "structurizr.dsl.identifier" : "system.auth.jwtstrategy"
-          },
-          "tags" : "Element,Component",
-          "technology" : "Python / python-jose"
-        }, {
-          "description" : "Zarządza logiką tworzenia, aktualizacji i pobierania użytkowników",
-          "documentation" : { },
-          "id" : "11",
+          "id" : "7",
           "name" : "User Manager",
           "properties" : {
-            "structurizr.dsl.identifier" : "system.auth.usermanager"
+            "structurizr.dsl.identifier" : "authusermanager"
           },
           "relationships" : [ {
-            "description" : "Deleguje operacje bazodanowe na użytkownikach",
-            "destinationId" : "12",
-            "id" : "16",
-            "sourceId" : "11",
-            "tags" : "Relationship",
-            "technology" : "Python call"
+            "description" : "Zarządza encjami użytkowników",
+            "destinationId" : "8",
+            "id" : "11",
+            "sourceId" : "7",
+            "tags" : "Relationship"
+          }, {
+            "description" : "Tworzy tokeny JWT",
+            "destinationId" : "9",
+            "id" : "12",
+            "sourceId" : "7",
+            "tags" : "Relationship"
           } ],
           "tags" : "Element,Component",
-          "technology" : "FastAPI Users / Python"
+          "technology" : "FastAPI-Users Logic"
         }, {
-          "description" : "Adapter mapujący operacje User Managera na zapytania SQLAlchemy",
+          "description" : "Abstrakcja dostępu do bazy danych użytkowników.",
           "documentation" : { },
-          "id" : "12",
-          "name" : "SQLAlchemy User DB Adapter",
+          "id" : "8",
+          "name" : "User DB Adapter",
           "properties" : {
-            "structurizr.dsl.identifier" : "system.auth.dbadapter"
+            "structurizr.dsl.identifier" : "authdbadapter"
           },
-          "relationships" : [ {
-            "description" : "Wykonuje operacje CRUD na tabeli 'users'",
-            "destinationId" : "22",
-            "id" : "42",
-            "sourceId" : "12",
-            "tags" : "Relationship",
-            "technology" : "SQLAlchemy"
-          } ],
           "tags" : "Element,Component",
-          "technology" : "FastAPI Users / SQLAlchemy"
+          "technology" : "FastAPI-Users SQLAlchemy"
+        }, {
+          "description" : "Tworzy i waliduje tokeny JWT.",
+          "documentation" : { },
+          "id" : "9",
+          "name" : "JWT Strategy",
+          "properties" : {
+            "structurizr.dsl.identifier" : "authjwtstrategy"
+          },
+          "tags" : "Element,Component",
+          "technology" : "FastAPI-Users JWT"
         } ],
-        "description" : "Uwierzytelnianie, logowanie, role",
+        "description" : "Serwis do zarządzania użytkownikami i uwierzytelnianiem.",
         "documentation" : { },
-        "id" : "7",
+        "id" : "5",
         "name" : "Auth Service",
         "properties" : {
-          "structurizr.dsl.identifier" : "system.auth"
+          "structurizr.dsl.identifier" : "authservice"
         },
         "relationships" : [ {
-          "description" : "Czyta/Zapisuje dane uwierzytelniające",
-          "destinationId" : "22",
-          "id" : "36",
-          "sourceId" : "7",
-          "tags" : "Relationship"
+          "description" : "Czyta/Zapisuje dane użytkowników",
+          "destinationId" : "45",
+          "id" : "49",
+          "sourceId" : "5",
+          "tags" : "Relationship",
+          "technology" : "JDBC"
         } ],
-        "tags" : "Element,Container",
-        "technology" : "FastAPI"
+        "tags" : "Element,Container,Microservice",
+        "technology" : "Python/FastAPI"
       }, {
-        "description" : "Zamówienia, sesje stolików, statusy",
+        "components" : [ {
+          "description" : "Obsługuje przychodzące żądania HTTP API.",
+          "documentation" : { },
+          "id" : "14",
+          "name" : "Order Controller",
+          "properties" : {
+            "structurizr.dsl.identifier" : "orderapi"
+          },
+          "relationships" : [ {
+            "description" : "Używa do operacji na bazie danych",
+            "destinationId" : "15",
+            "id" : "18",
+            "sourceId" : "14",
+            "tags" : "Relationship"
+          }, {
+            "description" : "Wysyła wiadomość po utworzeniu zamówienia",
+            "destinationId" : "16",
+            "id" : "19",
+            "sourceId" : "14",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "FastAPI Router"
+        }, {
+          "description" : "Zarządza logiką dostępu do danych zamówień.",
+          "documentation" : { },
+          "id" : "15",
+          "name" : "Order Repository",
+          "properties" : {
+            "structurizr.dsl.identifier" : "orderrepository"
+          },
+          "tags" : "Element,Component",
+          "technology" : "SQLAlchemy"
+        }, {
+          "description" : "Publikuje zdarzenia dotyczące zamówień.",
+          "documentation" : { },
+          "id" : "16",
+          "name" : "RabbitMQ Producer",
+          "properties" : {
+            "structurizr.dsl.identifier" : "orderproducer"
+          },
+          "tags" : "Element,Component",
+          "technology" : "aio-pika"
+        }, {
+          "description" : "Nasłuchuje na zdarzenia dotyczące zmian statusu.",
+          "documentation" : { },
+          "id" : "17",
+          "name" : "RabbitMQ Consumer",
+          "properties" : {
+            "structurizr.dsl.identifier" : "orderconsumer"
+          },
+          "relationships" : [ {
+            "description" : "Aktualizuje status zamówienia w bazie danych",
+            "destinationId" : "15",
+            "id" : "20",
+            "sourceId" : "17",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "aio-pika"
+        } ],
+        "description" : "Serwis do tworzenia i zarządzania zamówieniami przez klienta.",
         "documentation" : { },
-        "id" : "17",
+        "id" : "13",
         "name" : "Order Service",
         "properties" : {
-          "structurizr.dsl.identifier" : "system.order"
+          "structurizr.dsl.identifier" : "orderservice"
         },
         "relationships" : [ {
-          "description" : "Informuje o przyjęciu zamówienia",
-          "destinationId" : "20",
-          "id" : "32",
-          "sourceId" : "17",
-          "tags" : "Relationship"
-        }, {
           "description" : "Czyta/Zapisuje dane zamówień",
-          "destinationId" : "23",
-          "id" : "37",
-          "sourceId" : "17",
-          "tags" : "Relationship"
+          "destinationId" : "45",
+          "id" : "50",
+          "sourceId" : "13",
+          "tags" : "Relationship",
+          "technology" : "JDBC"
+        }, {
+          "description" : "Publikuje 'order_created'",
+          "destinationId" : "44",
+          "id" : "53",
+          "sourceId" : "13",
+          "tags" : "Relationship",
+          "technology" : "AMQP"
         } ],
-        "tags" : "Element,Container",
-        "technology" : "FastAPI"
+        "tags" : "Element,Container,Microservice",
+        "technology" : "Python/FastAPI"
       }, {
-        "description" : "Obsługa zamówień kuchennych",
-        "documentation" : { },
-        "id" : "18",
-        "name" : "Kitchen Service",
-        "properties" : {
-          "structurizr.dsl.identifier" : "system.kitchen"
-        },
-        "relationships" : [ {
-          "description" : "Informuje o gotowym daniu",
-          "destinationId" : "20",
-          "id" : "33",
-          "sourceId" : "18",
-          "tags" : "Relationship"
+        "components" : [ {
+          "description" : "Odbiera powiadomienia o statusie płatności.",
+          "documentation" : { },
+          "id" : "22",
+          "name" : "PayU Webhook Controller",
+          "properties" : {
+            "structurizr.dsl.identifier" : "paymentapi"
+          },
+          "relationships" : [ {
+            "description" : "Deleguje publikację zdarzenia",
+            "destinationId" : "25",
+            "id" : "27",
+            "sourceId" : "22",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "FastAPI Router"
         }, {
-          "description" : "Czyta/Zapisuje statusy zamówień kuchennych",
-          "destinationId" : "24",
-          "id" : "38",
-          "sourceId" : "18",
-          "tags" : "Relationship"
+          "description" : "Klient do komunikacji z zewnętrznym API PayU.",
+          "documentation" : { },
+          "id" : "23",
+          "name" : "PayU Client",
+          "properties" : {
+            "structurizr.dsl.identifier" : "paymentpayuclient"
+          },
+          "tags" : "Element,Component",
+          "technology" : "HTTP Client"
+        }, {
+          "description" : "Nasłuchuje na zdarzenia utworzenia zamówienia.",
+          "documentation" : { },
+          "id" : "24",
+          "name" : "RabbitMQ Consumer",
+          "properties" : {
+            "structurizr.dsl.identifier" : "paymentconsumer"
+          },
+          "relationships" : [ {
+            "description" : "Inicjuje płatność",
+            "destinationId" : "23",
+            "id" : "26",
+            "sourceId" : "24",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "aio-pika"
+        }, {
+          "description" : "Publikuje zdarzenia o statusie płatności.",
+          "documentation" : { },
+          "id" : "25",
+          "name" : "RabbitMQ Producer",
+          "properties" : {
+            "structurizr.dsl.identifier" : "paymentproducer"
+          },
+          "tags" : "Element,Component",
+          "technology" : "aio-pika"
         } ],
-        "tags" : "Element,Container",
-        "technology" : "FastAPI"
-      }, {
-        "description" : "Integracja z bramkami płatności",
-        "documentation" : { },
-        "id" : "19",
-        "name" : "Payment Service",
-        "properties" : {
-          "structurizr.dsl.identifier" : "system.payment"
-        },
-        "relationships" : [ {
-          "description" : "Potwierdza płatność",
-          "destinationId" : "20",
-          "id" : "34",
-          "sourceId" : "19",
-          "tags" : "Relationship"
-        }, {
-          "description" : "Wysyła rachunek po płatności",
-          "destinationId" : "21",
-          "id" : "35",
-          "sourceId" : "19",
-          "tags" : "Relationship"
-        }, {
-          "description" : "Czyta/Zapisuje logi płatności",
-          "destinationId" : "25",
-          "id" : "41",
-          "sourceId" : "19",
-          "tags" : "Relationship"
-        }, {
-          "description" : "Wysyła dane do płatności",
-          "destinationId" : "4",
-          "id" : "47",
-          "sourceId" : "19",
-          "tags" : "Relationship"
-        } ],
-        "tags" : "Element,Container",
-        "technology" : "FastAPI"
-      }, {
-        "description" : "Wysyłanie powiadomień SMS",
-        "documentation" : { },
-        "id" : "20",
-        "name" : "SMS Service",
-        "properties" : {
-          "structurizr.dsl.identifier" : "system.sms"
-        },
-        "relationships" : [ {
-          "description" : "Czyta/Zapisuje logi wysłanych SMS-ów",
-          "destinationId" : "26",
-          "id" : "39",
-          "sourceId" : "20",
-          "tags" : "Relationship"
-        }, {
-          "description" : "Wysyła dane do powiadomień",
-          "destinationId" : "2",
-          "id" : "43",
-          "sourceId" : "20",
-          "tags" : "Relationship"
-        } ],
-        "tags" : "Element,Container",
-        "technology" : "FastAPI"
-      }, {
-        "description" : "Wysyłanie rachunków i e-maili",
+        "description" : "Serwis do obsługi płatności przez PayU.",
         "documentation" : { },
         "id" : "21",
-        "name" : "E-mail Service",
+        "name" : "Payment Service",
         "properties" : {
-          "structurizr.dsl.identifier" : "system.email"
+          "structurizr.dsl.identifier" : "paymentservice"
         },
         "relationships" : [ {
-          "description" : "Czyta/Zapisuje logi wysłanych e-maili",
-          "destinationId" : "27",
-          "id" : "40",
+          "description" : "Publikuje 'payment_status_changed'",
+          "destinationId" : "44",
+          "id" : "54",
           "sourceId" : "21",
-          "tags" : "Relationship"
-        }, {
-          "description" : "Wysyła dane do rachunków",
-          "destinationId" : "3",
-          "id" : "45",
-          "sourceId" : "21",
-          "tags" : "Relationship"
+          "tags" : "Relationship",
+          "technology" : "AMQP"
         } ],
-        "tags" : "Element,Container",
-        "technology" : "FastAPI"
+        "tags" : "Element,Container,Microservice",
+        "technology" : "Python/FastAPI"
       }, {
-        "description" : "Baza danych użytkowników i ról",
+        "components" : [ {
+          "description" : "Obsługuje żądania API personelu.",
+          "documentation" : { },
+          "id" : "29",
+          "name" : "Staff Order Controller",
+          "properties" : {
+            "structurizr.dsl.identifier" : "staffapi"
+          },
+          "relationships" : [ {
+            "description" : "Sprawdza uprawnienia",
+            "destinationId" : "31",
+            "id" : "34",
+            "sourceId" : "29",
+            "tags" : "Relationship"
+          }, {
+            "description" : "Pobiera/Aktualizuje dane zamówień",
+            "destinationId" : "30",
+            "id" : "35",
+            "sourceId" : "29",
+            "tags" : "Relationship"
+          }, {
+            "description" : "Wysyła zdarzenie o zmianie statusu",
+            "destinationId" : "32",
+            "id" : "36",
+            "sourceId" : "29",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "FastAPI Router"
+        }, {
+          "description" : "Zarządza logiką dostępu do danych zamówień.",
+          "documentation" : { },
+          "id" : "30",
+          "name" : "Order Repository",
+          "properties" : {
+            "structurizr.dsl.identifier" : "staffrepository"
+          },
+          "tags" : "Element,Component",
+          "technology" : "SQLAlchemy"
+        }, {
+          "description" : "Sprawdza uprawnienia personelu.",
+          "documentation" : { },
+          "id" : "31",
+          "name" : "Permission Validator",
+          "properties" : {
+            "structurizr.dsl.identifier" : "staffpermissions"
+          },
+          "tags" : "Element,Component",
+          "technology" : "Custom Logic"
+        }, {
+          "description" : "Publikuje zdarzenia po zmianie statusu.",
+          "documentation" : { },
+          "id" : "32",
+          "name" : "RabbitMQ Producer",
+          "properties" : {
+            "structurizr.dsl.identifier" : "staffproducer"
+          },
+          "tags" : "Element,Component",
+          "technology" : "aio-pika"
+        }, {
+          "description" : "Nasłuchuje na zdarzenia.",
+          "documentation" : { },
+          "id" : "33",
+          "name" : "RabbitMQ Consumer",
+          "properties" : {
+            "structurizr.dsl.identifier" : "staffconsumer"
+          },
+          "relationships" : [ {
+            "description" : "Aktualizuje lokalną kopię danych",
+            "destinationId" : "30",
+            "id" : "37",
+            "sourceId" : "33",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "aio-pika"
+        } ],
+        "description" : "Serwis do zarządzania zamówieniami przez personel.",
         "documentation" : { },
-        "id" : "22",
-        "name" : "Auth DB",
+        "id" : "28",
+        "name" : "Staff Service",
         "properties" : {
-          "structurizr.dsl.identifier" : "system.db_auth"
+          "structurizr.dsl.identifier" : "staffservice"
         },
-        "tags" : "Element,Container,Database",
-        "technology" : "PostgreSQL"
+        "relationships" : [ {
+          "description" : "Czyta/Zapisuje dane zamówień",
+          "destinationId" : "45",
+          "id" : "51",
+          "sourceId" : "28",
+          "tags" : "Relationship",
+          "technology" : "JDBC"
+        }, {
+          "description" : "Publikuje 'staff_status_changed'",
+          "destinationId" : "44",
+          "id" : "55",
+          "sourceId" : "28",
+          "tags" : "Relationship",
+          "technology" : "AMQP"
+        } ],
+        "tags" : "Element,Container,Microservice",
+        "technology" : "Python/FastAPI"
       }, {
-        "description" : "Baza danych zamówień",
+        "components" : [ {
+          "description" : "Odbiera wszystkie zdarzenia.",
+          "documentation" : { },
+          "id" : "39",
+          "name" : "RabbitMQ Consumer",
+          "properties" : {
+            "structurizr.dsl.identifier" : "notificationconsumer"
+          },
+          "relationships" : [ {
+            "description" : "Deleguje wysyłkę powiadomienia",
+            "destinationId" : "40",
+            "id" : "42",
+            "sourceId" : "39",
+            "tags" : "Relationship"
+          }, {
+            "description" : "Zapisuje log wysyłki",
+            "destinationId" : "41",
+            "id" : "43",
+            "sourceId" : "39",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "aio-pika"
+        }, {
+          "description" : "Klient do wysyłania powiadomień przez AWS SNS.",
+          "documentation" : { },
+          "id" : "40",
+          "name" : "SNS Client",
+          "properties" : {
+            "structurizr.dsl.identifier" : "notificationsnsclient"
+          },
+          "tags" : "Element,Component",
+          "technology" : "boto3"
+        }, {
+          "description" : "Zapisuje historię wysłanych powiadomień.",
+          "documentation" : { },
+          "id" : "41",
+          "name" : "Notification Repository",
+          "properties" : {
+            "structurizr.dsl.identifier" : "notificationrepository"
+          },
+          "tags" : "Element,Component",
+          "technology" : "SQLAlchemy"
+        } ],
+        "description" : "Serwis do wysyłania powiadomień.",
         "documentation" : { },
-        "id" : "23",
-        "name" : "Orders DB",
+        "id" : "38",
+        "name" : "Notification Service",
         "properties" : {
-          "structurizr.dsl.identifier" : "system.db_orders"
+          "structurizr.dsl.identifier" : "notificationservice"
         },
-        "tags" : "Element,Container,Database",
-        "technology" : "PostgreSQL"
+        "relationships" : [ {
+          "description" : "Zapisuje logi powiadomień",
+          "destinationId" : "45",
+          "id" : "52",
+          "sourceId" : "38",
+          "tags" : "Relationship",
+          "technology" : "JDBC"
+        } ],
+        "tags" : "Element,Container,Microservice",
+        "technology" : "Python/FastAPI"
       }, {
-        "description" : "Baza danych kuchni",
+        "description" : "Asynchroniczna komunikacja.",
         "documentation" : { },
-        "id" : "24",
-        "name" : "Kitchen DB",
+        "id" : "44",
+        "name" : "Broker Wiadomości",
         "properties" : {
-          "structurizr.dsl.identifier" : "system.db_kitchen"
+          "structurizr.dsl.identifier" : "messagebus"
         },
-        "tags" : "Element,Container,Database",
-        "technology" : "PostgreSQL"
+        "relationships" : [ {
+          "description" : "Dostarcza 'order_created'",
+          "destinationId" : "21",
+          "id" : "56",
+          "sourceId" : "44",
+          "tags" : "Relationship",
+          "technology" : "AMQP"
+        }, {
+          "description" : "Dostarcza zdarzenia o zmianie statusu",
+          "destinationId" : "13",
+          "id" : "57",
+          "sourceId" : "44",
+          "tags" : "Relationship",
+          "technology" : "AMQP"
+        }, {
+          "description" : "Dostarcza zdarzenia o zmianie statusu",
+          "destinationId" : "28",
+          "id" : "58",
+          "sourceId" : "44",
+          "tags" : "Relationship",
+          "technology" : "AMQP"
+        }, {
+          "description" : "Dostarcza wszystkie zdarzenia",
+          "destinationId" : "38",
+          "id" : "59",
+          "sourceId" : "44",
+          "tags" : "Relationship",
+          "technology" : "AMQP"
+        } ],
+        "tags" : "Element,Container,MessageBus",
+        "technology" : "RabbitMQ"
       }, {
-        "description" : "Logi płatności",
+        "description" : "Przechowuje dane w odizolowanych schematach.",
         "documentation" : { },
-        "id" : "25",
-        "name" : "Payment DB",
+        "id" : "45",
+        "name" : "Baza Danych",
         "properties" : {
-          "structurizr.dsl.identifier" : "system.db_payment"
-        },
-        "tags" : "Element,Container,Database",
-        "technology" : "PostgreSQL"
-      }, {
-        "description" : "Logi wysłanych SMS-ów",
-        "documentation" : { },
-        "id" : "26",
-        "name" : "SMS DB",
-        "properties" : {
-          "structurizr.dsl.identifier" : "system.db_sms"
-        },
-        "tags" : "Element,Container,Database",
-        "technology" : "PostgreSQL"
-      }, {
-        "description" : "Logi wysłanych e-maili",
-        "documentation" : { },
-        "id" : "27",
-        "name" : "Email DB",
-        "properties" : {
-          "structurizr.dsl.identifier" : "system.db_email"
+          "structurizr.dsl.identifier" : "database"
         },
         "tags" : "Element,Container,Database",
         "technology" : "PostgreSQL"
       } ],
-      "description" : "Pozwala klientom zamawiać dania, a obsłudze je realizować",
+      "description" : "Główny system do obsługi zamówień.",
       "documentation" : { },
-      "id" : "5",
+      "group" : "Restauracja XYZ",
+      "id" : "3",
       "location" : "Unspecified",
       "name" : "System Zamówień w Restauracji",
       "properties" : {
-        "structurizr.dsl.identifier" : "system"
+        "structurizr.dsl.identifier" : "orderingsystem"
       },
       "relationships" : [ {
-        "description" : "Wysyła dane do powiadomień",
-        "destinationId" : "2",
-        "id" : "44",
-        "linkedRelationshipId" : "43",
-        "sourceId" : "5"
+        "description" : "Przetwarza płatności",
+        "destinationId" : "61",
+        "id" : "66",
+        "sourceId" : "3",
+        "tags" : "Relationship",
+        "technology" : "HTTPS/JSON"
       }, {
-        "description" : "Wysyła dane do rachunków",
-        "destinationId" : "3",
-        "id" : "46",
-        "linkedRelationshipId" : "45",
-        "sourceId" : "5"
-      }, {
-        "description" : "Wysyła dane do płatności",
-        "destinationId" : "4",
-        "id" : "48",
-        "linkedRelationshipId" : "47",
-        "sourceId" : "5"
+        "description" : "Wysyła powiadomienia",
+        "destinationId" : "62",
+        "id" : "68",
+        "sourceId" : "3",
+        "tags" : "Relationship",
+        "technology" : "HTTPS/JSON"
       } ],
-      "tags" : "Element,Software System"
+      "tags" : "Element,Software System,SoftwareSystemInternal"
+    }, {
+      "description" : "Interfejs użytkownika.",
+      "documentation" : { },
+      "id" : "60",
+      "location" : "Unspecified",
+      "name" : "Przeglądarka / Aplikacja",
+      "properties" : {
+        "structurizr.dsl.identifier" : "clientdevice"
+      },
+      "relationships" : [ {
+        "description" : "Wysyła żądania API",
+        "destinationId" : "3",
+        "id" : "65",
+        "sourceId" : "60",
+        "tags" : "Relationship",
+        "technology" : "HTTPS/JSON"
+      } ],
+      "tags" : "Element,Software System,SoftwareSystemExternal"
+    }, {
+      "description" : "Zewnętrzny system do przetwarzania płatności.",
+      "documentation" : { },
+      "id" : "61",
+      "location" : "Unspecified",
+      "name" : "PayU",
+      "properties" : {
+        "structurizr.dsl.identifier" : "paymentgateway"
+      },
+      "relationships" : [ {
+        "description" : "Odbiera powiadomienia",
+        "destinationId" : "3",
+        "id" : "67",
+        "sourceId" : "61",
+        "tags" : "Relationship",
+        "technology" : "Webhook"
+      } ],
+      "tags" : "Element,Software System,SoftwareSystemExternal"
+    }, {
+      "description" : "Zewnętrzna usługa do wysyłania powiadomień.",
+      "documentation" : { },
+      "id" : "62",
+      "location" : "Unspecified",
+      "name" : "AWS SNS",
+      "properties" : {
+        "structurizr.dsl.identifier" : "notificationgateway"
+      },
+      "relationships" : [ {
+        "description" : "Dostarcza powiadomienie",
+        "destinationId" : "1",
+        "id" : "69",
+        "sourceId" : "62",
+        "tags" : "Relationship",
+        "technology" : "SMS"
+      } ],
+      "tags" : "Element,Software System,SoftwareSystemExternal"
     } ]
   },
-  "name" : "System Zamówień w Restauracji",
+  "name" : "System Zamawiania Jedzenia w Restauracji",
   "properties" : {
-    "structurizr.dsl" : "Ly8gd29ya3NwYWNlLmRzbAp3b3Jrc3BhY2UgIlN5c3RlbSBaYW3Ds3dpZcWEIHcgUmVzdGF1cmFjamkiICJNb2RlbCBDNCBkbGEgU3lzdGVtdSBaYW3Ds3dpZcWEIiB7CgogICAgIWlkZW50aWZpZXJzIGhpZXJhcmNoaWNhbAoKICAgIC8vIG1vZGVsLmRzbAogICAgbW9kZWwgewogICAgICAgIC8vIFXFvHl0a293bmlrIHN5c3RlbXUKICAgICAgICB1c2VyID0gcGVyc29uICJVxbx5dGtvd25payIgIlByemVnbMSFZGEgbWVudSwgc2vFgmFkYSBpIG9wxYJhY2EgemFtw7N3aWVuaWEsIG9ic8WCdWd1amUgcMWCYXRub8WbY2ksIHByenlqbXVqZSB6YW3Ds3dpZW5pYSBpIHphcnrEhWR6YSBzeXN0ZW1lbSIKICAgIAogICAgICAgIC8vIFpld27EmXRyem5lIHN5c3RlbXkKICAgICAgICBzbXNfZ2F0ZXdheSA9IHNvZnR3YXJlU3lzdGVtICJVc8WCdWdhIFNNUyIgIld5c3nFgmEgcG93aWFkb21pZW5pYSBkbyBrbGllbnTDs3ciCiAgICAgICAgZW1haWxfZ2F0ZXdheSA9IHNvZnR3YXJlU3lzdGVtICJVc8WCdWdhIGUtbWFpbCIgIld5c3nFgmEgcmFjaHVua2kgZWxla3Ryb25pY3puZSBkbyBrbGllbnTDs3ciCiAgICAgICAgcGF5bWVudF9nYXRld2F5ID0gc29mdHdhcmVTeXN0ZW0gIkJyYW1rYSBwxYJhdG5vxZtjaSBvbmxpbmUiICJPYnPFgnVndWplIHDFgmF0bm/Fm2NpIEJMSUssIFBheVUsIGl0cC4iCiAgICAKICAgICAgICAvLyBHxYLDs3dueSBzeXN0ZW0KICAgICAgICBzeXN0ZW0gPSBzb2Z0d2FyZVN5c3RlbSAiU3lzdGVtIFphbcOzd2llxYQgdyBSZXN0YXVyYWNqaSIgIlBvendhbGEga2xpZW50b20gemFtYXdpYcSHIGRhbmlhLCBhIG9ic8WCdWR6ZSBqZSByZWFsaXpvd2HEhyIgewogICAgCiAgICAgICAgICAgIC8vIC0tLSBLb250ZW5lcnkgQXBsaWthY3lqbmUgLS0tCiAgICAgICAgICAgIGdhdGV3YXkgPSBjb250YWluZXIgIkFQSSBHYXRld2F5IiAiUm91dGluZyDFvMSFZGHFhCBkbyBtaWtyb3Nlcndpc8OzdywgdXdpZXJ6eXRlbG5pYW5pZSwgYXV0b3J5emFjamEiICJLb25nIgogICAgCiAgICAgICAgICAgIC8vIC0tLSBLb250ZW5lciBBdXRoIFNlcnZpY2UgeiBLb21wb25lbnRhbWkgKFBvemlvbSAzKSAtLS0KICAgICAgICAgICAgYXV0aCA9IGNvbnRhaW5lciAiQXV0aCBTZXJ2aWNlIiAiVXdpZXJ6eXRlbG5pYW5pZSwgbG9nb3dhbmllLCByb2xlIiAiRmFzdEFQSSIgewogICAgICAgICAgICAgICAgLy8gS29tcG9uZW50eSB3ZXduxJl0cnpuZSBBdXRoIFNlcnZpY2UgLSBOYSBwb2RzdGF3aWUga29kdSBGYXN0QVBJCiAgICAgICAgICAgICAgICByb3V0ZXJzID0gY29tcG9uZW50ICJGYXN0QVBJIFVzZXJzIFJvdXRlcnMiICJPYnPFgnVndWplIMW8xIVkYW5pYSBIVFRQIGRsYSAvYXV0aC8qIGkgL3VzZXJzLyogdcW8eXdhasSFYyBmYXN0YXBpLXVzZXJzIiAiRmFzdEFQSSBVc2VycyIgewogICAgICAgICAgICAgICAgICAgIHRhZ3MgIkNvbXBvbmVudCIKICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgICAgIGF1dGhCYWNrZW5kID0gY29tcG9uZW50ICJBdXRoZW50aWNhdGlvbiBCYWNrZW5kIiAiS29vcmR5bnVqZSBwcm9jZXMgdXdpZXJ6eXRlbG5pYW5pYSBKV1QiICJGYXN0QVBJIFVzZXJzIiB7CiAgICAgICAgICAgICAgICAgICAgdGFncyAiQ29tcG9uZW50IgogICAgICAgICAgICAgICAgfQogICAgICAgICAgICAgICAgand0U3RyYXRlZ3kgPSBjb21wb25lbnQgIkN1c3RvbSBKV1QgU3RyYXRlZ3kiICJHZW5lcnVqZSBpIHdhbGlkdWplIHRva2VueSBKV1QgeiByb2zEhSB1xbx5dGtvd25pa2EiICJQeXRob24gLyBweXRob24tam9zZSIgewogICAgICAgICAgICAgICAgICAgIHRhZ3MgIkNvbXBvbmVudCIKICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgICAgIHVzZXJNYW5hZ2VyID0gY29tcG9uZW50ICJVc2VyIE1hbmFnZXIiICJaYXJ6xIVkemEgbG9naWvEhSB0d29yemVuaWEsIGFrdHVhbGl6YWNqaSBpIHBvYmllcmFuaWEgdcW8eXRrb3duaWvDs3ciICJGYXN0QVBJIFVzZXJzIC8gUHl0aG9uIiB7CiAgICAgICAgICAgICAgICAgICAgdGFncyAiQ29tcG9uZW50IgogICAgICAgICAgICAgICAgfQogICAgICAgICAgICAgICAgZGJBZGFwdGVyID0gY29tcG9uZW50ICJTUUxBbGNoZW15IFVzZXIgREIgQWRhcHRlciIgIkFkYXB0ZXIgbWFwdWrEhWN5IG9wZXJhY2plIFVzZXIgTWFuYWdlcmEgbmEgemFweXRhbmlhIFNRTEFsY2hlbXkiICJGYXN0QVBJIFVzZXJzIC8gU1FMQWxjaGVteSIgewogICAgICAgICAgICAgICAgICAgIHRhZ3MgIkNvbXBvbmVudCIKICAgICAgICAgICAgICAgIH0KICAgIAogICAgICAgICAgICAgICAgLy8gUmVsYWNqZSB3ZXduxJl0cnpuZSBtacSZZHp5IGtvbXBvbmVudGFtaSBBdXRoIFNlcnZpY2UKICAgICAgICAgICAgICAgIHJvdXRlcnMgLT4gdXNlck1hbmFnZXIgIlXFvHl3YSBkbyByZWplc3RyYWNqaSwgcG9iaWVyYW5pYS96YXJ6xIVkemFuaWEgdcW8eXRrb3duaWthbWkiICJGYXN0QVBJIGRlcGVuZGVuY3kgaW5qZWN0aW9uIgogICAgICAgICAgICAgICAgcm91dGVycyAtPiBhdXRoQmFja2VuZCAiVcW8eXdhIGRvIGxvZ293YW5pYSwgd2VyeWZpa2FjamkgdG9rZW7Ds3ciICJGYXN0QVBJIGRlcGVuZGVuY3kgaW5qZWN0aW9uIgogICAgICAgICAgICAgICAgYXV0aEJhY2tlbmQgLT4gand0U3RyYXRlZ3kgIkRlbGVndWplIHR3b3J6ZW5pZS9vZGN6eXQgdG9rZW51IiAiUHl0aG9uIGNhbGwiCiAgICAgICAgICAgICAgICB1c2VyTWFuYWdlciAtPiBkYkFkYXB0ZXIgIkRlbGVndWplIG9wZXJhY2plIGJhem9kYW5vd2UgbmEgdcW8eXRrb3duaWthY2giICJQeXRob24gY2FsbCIKICAgIAogICAgICAgICAgICAgICAgLy8gUmVsYWNqYSBrb21wb25lbnR1IERCIEFkYXB0ZXIgZG8ga29udGVuZXJhIGJhenkgZGFueWNoCiAgICAgICAgICAgICAgICAvLyBkYkFkYXB0ZXIgLT4gZGJfYXV0aCAiV3lrb251amUgb3BlcmFjamUgQ1JVRCBuYSB0YWJlbGkgJ3VzZXJzJyIgIlNRTEFsY2hlbXkgLyBUQ1AiCiAgICAgICAgICAgIH0KICAgIAogICAgICAgICAgICBvcmRlciA9IGNvbnRhaW5lciAiT3JkZXIgU2VydmljZSIgIlphbcOzd2llbmlhLCBzZXNqZSBzdG9saWvDs3csIHN0YXR1c3kiICJGYXN0QVBJIgogICAgICAgICAgICBraXRjaGVuID0gY29udGFpbmVyICJLaXRjaGVuIFNlcnZpY2UiICJPYnPFgnVnYSB6YW3Ds3dpZcWEIGt1Y2hlbm55Y2giICJGYXN0QVBJIgogICAgICAgICAgICBwYXltZW50ID0gY29udGFpbmVyICJQYXltZW50IFNlcnZpY2UiICJJbnRlZ3JhY2phIHogYnJhbWthbWkgcMWCYXRub8WbY2kiICJGYXN0QVBJIgogICAgICAgICAgICBzbXMgPSBjb250YWluZXIgIlNNUyBTZXJ2aWNlIiAiV3lzecWCYW5pZSBwb3dpYWRvbWllxYQgU01TIiAiRmFzdEFQSSIKICAgICAgICAgICAgZW1haWwgPSBjb250YWluZXIgIkUtbWFpbCBTZXJ2aWNlIiAiV3lzecWCYW5pZSByYWNodW5rw7N3IGkgZS1tYWlsaSIgIkZhc3RBUEkiCiAgICAKICAgICAgICAgICAgLy8gLS0tIEtvbnRlbmVyeSBCYXpvZGFub3dlIC0tLQogICAgICAgICAgICBkYl9hdXRoID0gY29udGFpbmVyICJBdXRoIERCIiAiQmF6YSBkYW55Y2ggdcW8eXRrb3duaWvDs3cgaSByw7NsIiAiUG9zdGdyZVNRTCIgewogICAgICAgICAgICAgICAgdGFncyAiRGF0YWJhc2UiCiAgICAgICAgICAgIH0KICAgICAgICAgICAgZGJfb3JkZXJzID0gY29udGFpbmVyICJPcmRlcnMgREIiICJCYXphIGRhbnljaCB6YW3Ds3dpZcWEIiAiUG9zdGdyZVNRTCIgewogICAgICAgICAgICAgICAgdGFncyAiRGF0YWJhc2UiCiAgICAgICAgICAgIH0KICAgICAgICAgICAgZGJfa2l0Y2hlbiA9IGNvbnRhaW5lciAiS2l0Y2hlbiBEQiIgIkJhemEgZGFueWNoIGt1Y2huaSIgIlBvc3RncmVTUUwiIHsKICAgICAgICAgICAgICAgIHRhZ3MgIkRhdGFiYXNlIgogICAgICAgICAgICB9CiAgICAgICAgICAgIGRiX3BheW1lbnQgPSBjb250YWluZXIgIlBheW1lbnQgREIiICJMb2dpIHDFgmF0bm/Fm2NpIiAiUG9zdGdyZVNRTCIgewogICAgICAgICAgICAgICAgdGFncyAiRGF0YWJhc2UiCiAgICAgICAgICAgIH0KICAgICAgICAgICAgZGJfc21zID0gY29udGFpbmVyICJTTVMgREIiICJMb2dpIHd5c8WCYW55Y2ggU01TLcOzdyIgIlBvc3RncmVTUUwiIHsKICAgICAgICAgICAgICAgIHRhZ3MgIkRhdGFiYXNlIgogICAgICAgICAgICB9CiAgICAgICAgICAgIGRiX2VtYWlsID0gY29udGFpbmVyICJFbWFpbCBEQiIgIkxvZ2kgd3lzxYJhbnljaCBlLW1haWxpIiAiUG9zdGdyZVNRTCIgewogICAgICAgICAgICAgICAgdGFncyAiRGF0YWJhc2UiCiAgICAgICAgICAgIH0KICAgIAogICAgICAgICAgICAvLyAtLS0gUmVsYWNqZSBNScSYRFpZIEtPTlRFTkVSQU1JIChkbGEgd2lkb2t1IFBvemlvbXUgMikgLS0tCiAgICAKICAgICAgICAgICAgLy8gR2F0ZXdheSAtPiBTZXJ3aXN5CiAgICAgICAgICAgIGdhdGV3YXkgLT4gYXV0aCAiUmVqZXN0cmFjamEsIGxvZ293YW5pZSwgSldUIgogICAgICAgICAgICBnYXRld2F5IC0+IG9yZGVyICJaYXJ6xIVkemFuaWUgemFtw7N3aWVuaWFtaSIKICAgICAgICAgICAgZ2F0ZXdheSAtPiBraXRjaGVuICJaYW3Ds3dpZW5pYSBrdWNoZW5uZSIKICAgICAgICAgICAgZ2F0ZXdheSAtPiBwYXltZW50ICJSb3pwb2N6eW5hIHDFgmF0bm/Fm8SHIgogICAgCiAgICAgICAgICAgIC8vIFNlcndpcyAtPiBTZXJ3aXMgKEJhY2tlbmQgLT4gQmFja2VuZCkKICAgICAgICAgICAgb3JkZXIgLT4gc21zICJJbmZvcm11amUgbyBwcnp5asSZY2l1IHphbcOzd2llbmlhIgogICAgICAgICAgICBraXRjaGVuIC0+IHNtcyAiSW5mb3JtdWplIG8gZ290b3d5bSBkYW5pdSIKICAgICAgICAgICAgcGF5bWVudCAtPiBzbXMgIlBvdHdpZXJkemEgcMWCYXRub8WbxIciCiAgICAgICAgICAgIHBheW1lbnQgLT4gZW1haWwgIld5c3nFgmEgcmFjaHVuZWsgcG8gcMWCYXRub8WbY2kiCiAgICAKICAgICAgICAgICAgLy8gU2Vyd2lzIC0+IEJhemEgZGFueWNoCiAgICAgICAgICAgIGF1dGggLT4gZGJfYXV0aCAiQ3p5dGEvWmFwaXN1amUgZGFuZSB1d2llcnp5dGVsbmlhasSFY2UiCiAgICAgICAgICAgIG9yZGVyIC0+IGRiX29yZGVycyAiQ3p5dGEvWmFwaXN1amUgZGFuZSB6YW3Ds3dpZcWEIgogICAgICAgICAgICBraXRjaGVuIC0+IGRiX2tpdGNoZW4gIkN6eXRhL1phcGlzdWplIHN0YXR1c3kgemFtw7N3aWXFhCBrdWNoZW5ueWNoIgogICAgICAgICAgICBzbXMgLT4gZGJfc21zICJDenl0YS9aYXBpc3VqZSBsb2dpIHd5c8WCYW55Y2ggU01TLcOzdyIKICAgICAgICAgICAgZW1haWwgLT4gZGJfZW1haWwgIkN6eXRhL1phcGlzdWplIGxvZ2kgd3lzxYJhbnljaCBlLW1haWxpIgogICAgICAgICAgICBwYXltZW50IC0+IGRiX3BheW1lbnQgIkN6eXRhL1phcGlzdWplIGxvZ2kgcMWCYXRub8WbY2kiCiAgICAKICAgICAgICAgICAgLy8gLS0tIFJlbGFjamEgS09NUE9ORU5UIC0+IEtPTlRFTkVSIERCIChkbGEgd2lkb2t1IFBvemlvbXUgMyAtIEF1dGggU2VydmljZSkgLS0tCiAgICAgICAgICAgIHN5c3RlbS5hdXRoLmRiQWRhcHRlciAtPiBzeXN0ZW0uZGJfYXV0aCAiV3lrb251amUgb3BlcmFjamUgQ1JVRCBuYSB0YWJlbGkgJ3VzZXJzJyIgIlNRTEFsY2hlbXkiCiAgICAKICAgICAgICAgICAgLy8gU2Vyd2lzIC0+IFpld27EmXRyem5lIHN5c3RlbXkKICAgICAgICAgICAgc21zIC0+IHNtc19nYXRld2F5ICJXeXN5xYJhIGRhbmUgZG8gcG93aWFkb21pZcWEIgogICAgICAgICAgICBlbWFpbCAtPiBlbWFpbF9nYXRld2F5ICJXeXN5xYJhIGRhbmUgZG8gcmFjaHVua8OzdyIKICAgICAgICAgICAgcGF5bWVudCAtPiBwYXltZW50X2dhdGV3YXkgIld5c3nFgmEgZGFuZSBkbyBwxYJhdG5vxZtjaSIKICAgICAgICB9CiAgICAKICAgICAgICAvLyAtLS0gUmVsYWNqZSBwcnplY2hvZHrEhWNlIHByemV6IGdyYW5pY8SZIHN5c3RlbXUgLS0tCiAgICAKICAgICAgICAvLyBSZWxhY2phIGRsYSB3aWRva3Uga29udGVrc3R1IChQb3ppb20gMSkKICAgICAgICB1c2VyIC0+IHN5c3RlbSAiVcW8eXdhIHN5c3RlbXUgZG8gc2vFgmFkYW5pYSB6YW3Ds3dpZcWELCB6YXJ6xIVkemFuaWEsIGV0Yy4iCiAgICAKICAgICAgICAvLyBSZWxhY2phIFXFvHl0a293bmlrIC0+IEdhdGV3YXkgKGRsYSB3aWRva3UgUG96aW9tdSAyKQogICAgICAgIHVzZXIgLT4gc3lzdGVtLmdhdGV3YXkgIld5c3nFgmEgxbzEhWRhbmlhIEFQSSAoUkVTVCkiCiAgICAKICAgICAgICAvLyBSZWxhY2phIEdhdGV3YXkgLT4gS29tcG9uZW50IChkbGEgd2lkb2t1IFBvemlvbXUgMyAtIEF1dGggU2VydmljZSkKICAgICAgICBzeXN0ZW0uZ2F0ZXdheSAtPiBzeXN0ZW0uYXV0aC5yb3V0ZXJzICJQcnpla2F6dWplIMW8xIVkYW5pYSBIVFRQIGRvIG9ic8WCdWdpIHByemV6IEZhc3RBUEkgVXNlcnMiCiAgICB9CiAgICAvLyB2aWV3cy5kc2wKICAgIHZpZXdzIHsKICAgICAgICAvLyAtLS0gV2lkb2sgS29udGVrc3R1IFN5c3RlbXUgKFBvemlvbSAxKSAtLS0KICAgICAgICBzeXN0ZW1Db250ZXh0IHN5c3RlbSAiU3lzdGVtQ29udGV4dCIgIkRpYWdyYW0ga29udGVrc3Rvd3kgKFBvemlvbSAxKSBwb2thenVqxIVjeSBpbnRlcmFrY2plIFN5c3RlbXUgWmFtw7N3aWXFhCB3IFJlc3RhdXJhY2ppIHogdcW8eXRrb3duaWthbWkgaSBzeXN0ZW1hbWkgemV3bsSZdHJ6bnltaS4iIHsKICAgICAgICAgICAgLy8gSW5jbHVkZSBhbGwgdG9wLWxldmVsIGVsZW1lbnRzIChwZW9wbGUsIHNvZnR3YXJlIHN5c3RlbXMpCiAgICAgICAgICAgIGluY2x1ZGUgKgogICAgICAgICAgICBkZXNjcmlwdGlvbiAiRGlhZ3JhbSBLb250ZWtzdG93eSBDNCAtIFBvemlvbSAxIgogICAgICAgIH0KICAgIAogICAgICAgIC8vIC0tLSBXaWRvayBLb250ZW5lcsOzdyAoUG96aW9tIDIpIC0tLQogICAgICAgIGNvbnRhaW5lciBzeXN0ZW0gIkNvbnRhaW5lcnMiICJEaWFncmFtIGtvbnRlbmVyw7N3IChQb3ppb20gMikgcG9rYXp1asSFY3kgZ8WCw7N3bmUgYmxva2kgYnVkdWrEhWNlIFN5c3RlbSBaYW3Ds3dpZcWEIHcgUmVzdGF1cmFjamkuIiB7CiAgICAgICAgICAgIC8vIEluY2x1ZGUgZXZlcnl0aGluZyBieSBkZWZhdWx0IGZvciBhIGNvbnRhaW5lciB2aWV3IChwZW9wbGUsIGV4dGVybmFsIHN5c3RlbXMsIGludGVybmFsIGNvbnRhaW5lcnMpCiAgICAgICAgICAgIGluY2x1ZGUgKgogICAgICAgICAgICBkZXNjcmlwdGlvbiAiRGlhZ3JhbSBLb250ZW5lcsOzdyBDNCAtIFBvemlvbSAyIgogICAgICAgIH0KICAgIAogICAgICAgIC8vIC0tLSBXaWRvayBLb21wb25lbnTDs3cgZGxhIEF1dGggU2VydmljZSAoUG96aW9tIDMpIC0tLQogICAgICAgIGNvbXBvbmVudCBzeXN0ZW0uYXV0aCAiQXV0aENvbXBvbmVudHMiICJEaWFncmFtIGtvbXBvbmVudMOzdyAoUG96aW9tIDMpIGRsYSBVc8WCdWdpIEF1dG9yeXphY3lqbmVqIChBdXRoIFNlcnZpY2UpLiIgewogICAgICAgICAgICAvLyBJbmNsdWRlIGFsbCBjb21wb25lbnRzIHdpdGhpbiBhdXRoIHNlcnZpY2UsIHBsdXMgY29ubmVjdGVkIGVsZW1lbnRzIChnYXRld2F5LCBkYl9hdXRoKQogICAgICAgICAgICBpbmNsdWRlICoKICAgICAgICAgICAgZGVzY3JpcHRpb24gIkRpYWdyYW0gS29tcG9uZW50w7N3IEM0IC0gUG96aW9tIDMgKEF1dGggU2VydmljZSkiCiAgICAgICAgfQogICAgCiAgICAgICAgLy8gRG/FgsSFY3phbmllIHN0eWzDs3cKICAgICAgICAvLyBzdHlsZXMuZHNsCiAgICAgICAgc3R5bGVzIHsKICAgICAgICAgICAgLy8gU3R5bCBkbGEgVcW8eXRrb3duaWvDs3cgWmV3bsSZdHJ6bnljaAogICAgICAgICAgICBlbGVtZW50ICJQZXJzb24iIHsKICAgICAgICAgICAgICAgIHNoYXBlIFBlcnNvbgogICAgICAgICAgICAgICAgYmFja2dyb3VuZCAjNTE5MUZBCiAgICAgICAgICAgICAgICBjb2xvciAjZmZmZmZmCiAgICAgICAgICAgIH0KICAgICAgICAgICAgLy8gU3R5bCBkbGEgU3lzdGVtdSBHxYLDs3duZWdvIGkgWmV3bsSZdHJ6bnljaAogICAgICAgICAgICBlbGVtZW50ICJTb2Z0d2FyZSBTeXN0ZW0iIHsKICAgICAgICAgICAgICAgIGJhY2tncm91bmQgIzhBMkJFMgogICAgICAgICAgICAgICAgY29sb3IgI2ZmZmZmZgogICAgICAgICAgICAgICAgc2hhcGUgQm94CiAgICAgICAgICAgIH0KICAgICAgICAgICAgLy8gU3R5bCBkbGEga29udGVuZXLDs3cgYXBsaWthY3lqbnljaAogICAgICAgICAgICBlbGVtZW50ICJDb250YWluZXIiIHsKICAgICAgICAgICAgICAgIGJhY2tncm91bmQgIzlhMjhmOAogICAgICAgICAgICAgICAgY29sb3IgI2ZmZmZmZgogICAgICAgICAgICAgICAgc2hhcGUgQm94CiAgICAgICAgICAgIH0KICAgICAgICAgICAgLy8gU3R5bCBkbGEga29udGVuZXLDs3cgb3puYWN6b255Y2ggdGFnaWVtICJEYXRhYmFzZSIKICAgICAgICAgICAgZWxlbWVudCAiRGF0YWJhc2UiIHsKICAgICAgICAgICAgICAgIHNoYXBlIEN5bGluZGVyCiAgICAgICAgICAgICAgICBiYWNrZ3JvdW5kICM0YjAwODIKICAgICAgICAgICAgICAgIGNvbG9yICNmZmZmZmYKICAgICAgICAgICAgfQogICAgICAgICAgICAvLyBTdHlsIGRsYSBLb21wb25lbnTDs3cKICAgICAgICAgICAgZWxlbWVudCAiQ29tcG9uZW50IiB7CiAgICAgICAgICAgICAgICBiYWNrZ3JvdW5kICNCMzZBRkIKICAgICAgICAgICAgICAgIGNvbG9yICNmZmZmZmYKICAgICAgICAgICAgICAgIHNoYXBlIENvbXBvbmVudAogICAgICAgICAgICB9CiAgICAgICAgfQogICAgfQp9"
+    "structurizr.dsl" : "Ly8gd29ya3NwYWNlLmRzbAoKd29ya3NwYWNlICJTeXN0ZW0gWmFtYXdpYW5pYSBKZWR6ZW5pYSB3IFJlc3RhdXJhY2ppIiAiU3lzdGVtIG9wYXJ0eSBuYSBtaWtyb3Nlcndpc2FjaCBkbyB6YXJ6xIVkemFuaWEgemFtw7N3aWVuaWFtaSB3IHJlc3RhdXJhY2ppIiB7CgogICAgLy8gbW9kZWwuZHNsCiAgICAKICAgIG1vZGVsIHsKICAgICAgICBncm91cCAiUmVzdGF1cmFjamEgWFlaIiB7CiAgICAgICAgICAgIGNsaWVudCA9IHBlcnNvbiAiS2xpZW50IiAiT3NvYmEgc2vFgmFkYWrEhWNhIHphbcOzd2llbmllIHcgcmVzdGF1cmFjamkuIiAiUGVyc29uIgogICAgICAgICAgICBzdGFmZiA9IHBlcnNvbiAiUGVyc29uZWwgUmVzdGF1cmFjamkiICJLdWNoYXJ6L0tlbG5lciB6YXJ6xIVkemFqxIVjeSB6YW3Ds3dpZW5pYW1pLiIgIlBlcnNvbiIKICAgIAogICAgICAgICAgICBvcmRlcmluZ1N5c3RlbSA9IHNvZnR3YXJlU3lzdGVtICJTeXN0ZW0gWmFtw7N3aWXFhCB3IFJlc3RhdXJhY2ppIiAiR8WCw7N3bnkgc3lzdGVtIGRvIG9ic8WCdWdpIHphbcOzd2llxYQuIiAiU29mdHdhcmVTeXN0ZW1JbnRlcm5hbCIgewogICAgCiAgICAgICAgICAgICAgICBhcGlHYXRld2F5ID0gY29udGFpbmVyICJBUEkgR2F0ZXdheSIgIlBvamVkeW5jenkgcHVua3Qgd2VqxZtjaWEgZG8gc3lzdGVtdS4iICJLb25nIiAiR2F0ZXdheSIKICAgIAogICAgICAgICAgICAgICAgYXV0aFNlcnZpY2UgPSBjb250YWluZXIgIkF1dGggU2VydmljZSIgIlNlcndpcyBkbyB6YXJ6xIVkemFuaWEgdcW8eXRrb3duaWthbWkgaSB1d2llcnp5dGVsbmlhbmllbS4iICJQeXRob24vRmFzdEFQSSIgIk1pY3Jvc2VydmljZSIgewogICAgICAgICAgICAgICAgICAgIGF1dGhBcGkgPSBjb21wb25lbnQgIkF1dGggUm91dGVyIiAiT2JzxYJ1Z3VqZSDFvMSFZGFuaWEgQVBJIGRsYSAvYXV0aCwgL3JlZ2lzdGVyIGl0ZC4iICJGYXN0QVBJIFJvdXRlciIgIkNvbXBvbmVudCIKICAgICAgICAgICAgICAgICAgICBhdXRoVXNlck1hbmFnZXIgPSBjb21wb25lbnQgIlVzZXIgTWFuYWdlciIgIkxvZ2lrYSBiaXpuZXNvd2EgZG8gemFyesSFZHphbmlhIHXFvHl0a293bmlrYW1pLiIgIkZhc3RBUEktVXNlcnMgTG9naWMiICJDb21wb25lbnQiCiAgICAgICAgICAgICAgICAgICAgYXV0aERiQWRhcHRlciA9IGNvbXBvbmVudCAiVXNlciBEQiBBZGFwdGVyIiAiQWJzdHJha2NqYSBkb3N0xJlwdSBkbyBiYXp5IGRhbnljaCB1xbx5dGtvd25pa8Ozdy4iICJGYXN0QVBJLVVzZXJzIFNRTEFsY2hlbXkiICJDb21wb25lbnQiCiAgICAgICAgICAgICAgICAgICAgYXV0aEp3dFN0cmF0ZWd5ID0gY29tcG9uZW50ICJKV1QgU3RyYXRlZ3kiICJUd29yenkgaSB3YWxpZHVqZSB0b2tlbnkgSldULiIgIkZhc3RBUEktVXNlcnMgSldUIiAiQ29tcG9uZW50IgogICAgCiAgICAgICAgICAgICAgICAgICAgYXV0aEFwaSAtPiBhdXRoVXNlck1hbmFnZXIgIkRlbGVndWplIGxvZ2lrxJkgdXdpZXJ6eXRlbG5pYW5pYSIKICAgICAgICAgICAgICAgICAgICBhdXRoVXNlck1hbmFnZXIgLT4gYXV0aERiQWRhcHRlciAiWmFyesSFZHphIGVuY2phbWkgdcW8eXRrb3duaWvDs3ciCiAgICAgICAgICAgICAgICAgICAgYXV0aFVzZXJNYW5hZ2VyIC0+IGF1dGhKd3RTdHJhdGVneSAiVHdvcnp5IHRva2VueSBKV1QiCiAgICAgICAgICAgICAgICB9CiAgICAKICAgICAgICAgICAgICAgIG9yZGVyU2VydmljZSA9IGNvbnRhaW5lciAiT3JkZXIgU2VydmljZSIgIlNlcndpcyBkbyB0d29yemVuaWEgaSB6YXJ6xIVkemFuaWEgemFtw7N3aWVuaWFtaSBwcnpleiBrbGllbnRhLiIgIlB5dGhvbi9GYXN0QVBJIiAiTWljcm9zZXJ2aWNlIiB7CiAgICAgICAgICAgICAgICAgICAgb3JkZXJBcGkgPSBjb21wb25lbnQgIk9yZGVyIENvbnRyb2xsZXIiICJPYnPFgnVndWplIHByenljaG9kesSFY2UgxbzEhWRhbmlhIEhUVFAgQVBJLiIgIkZhc3RBUEkgUm91dGVyIiAiQ29tcG9uZW50IgogICAgICAgICAgICAgICAgICAgIG9yZGVyUmVwb3NpdG9yeSA9IGNvbXBvbmVudCAiT3JkZXIgUmVwb3NpdG9yeSIgIlphcnrEhWR6YSBsb2dpa8SFIGRvc3TEmXB1IGRvIGRhbnljaCB6YW3Ds3dpZcWELiIgIlNRTEFsY2hlbXkiICJDb21wb25lbnQiCiAgICAgICAgICAgICAgICAgICAgb3JkZXJQcm9kdWNlciA9IGNvbXBvbmVudCAiUmFiYml0TVEgUHJvZHVjZXIiICJQdWJsaWt1amUgemRhcnplbmlhIGRvdHljesSFY2UgemFtw7N3aWXFhC4iICJhaW8tcGlrYSIgIkNvbXBvbmVudCIKICAgICAgICAgICAgICAgICAgICBvcmRlckNvbnN1bWVyID0gY29tcG9uZW50ICJSYWJiaXRNUSBDb25zdW1lciIgIk5hc8WCdWNodWplIG5hIHpkYXJ6ZW5pYSBkb3R5Y3rEhWNlIHptaWFuIHN0YXR1c3UuIiAiYWlvLXBpa2EiICJDb21wb25lbnQiCiAgICAKICAgICAgICAgICAgICAgICAgICBvcmRlckFwaSAtPiBvcmRlclJlcG9zaXRvcnkgIlXFvHl3YSBkbyBvcGVyYWNqaSBuYSBiYXppZSBkYW55Y2giCiAgICAgICAgICAgICAgICAgICAgb3JkZXJBcGkgLT4gb3JkZXJQcm9kdWNlciAiV3lzecWCYSB3aWFkb21vxZvEhyBwbyB1dHdvcnplbml1IHphbcOzd2llbmlhIgogICAgICAgICAgICAgICAgICAgIG9yZGVyQ29uc3VtZXIgLT4gb3JkZXJSZXBvc2l0b3J5ICJBa3R1YWxpenVqZSBzdGF0dXMgemFtw7N3aWVuaWEgdyBiYXppZSBkYW55Y2giCiAgICAgICAgICAgICAgICB9CiAgICAKICAgICAgICAgICAgICAgIHBheW1lbnRTZXJ2aWNlID0gY29udGFpbmVyICJQYXltZW50IFNlcnZpY2UiICJTZXJ3aXMgZG8gb2JzxYJ1Z2kgcMWCYXRub8WbY2kgcHJ6ZXogUGF5VS4iICJQeXRob24vRmFzdEFQSSIgIk1pY3Jvc2VydmljZSIgewogICAgICAgICAgICAgICAgICAgIHBheW1lbnRBcGkgPSBjb21wb25lbnQgIlBheVUgV2ViaG9vayBDb250cm9sbGVyIiAiT2RiaWVyYSBwb3dpYWRvbWllbmlhIG8gc3RhdHVzaWUgcMWCYXRub8WbY2kuIiAiRmFzdEFQSSBSb3V0ZXIiICJDb21wb25lbnQiCiAgICAgICAgICAgICAgICAgICAgcGF5bWVudFBheXVDbGllbnQgPSBjb21wb25lbnQgIlBheVUgQ2xpZW50IiAiS2xpZW50IGRvIGtvbXVuaWthY2ppIHogemV3bsSZdHJ6bnltIEFQSSBQYXlVLiIgIkhUVFAgQ2xpZW50IiAiQ29tcG9uZW50IgogICAgICAgICAgICAgICAgICAgIHBheW1lbnRDb25zdW1lciA9IGNvbXBvbmVudCAiUmFiYml0TVEgQ29uc3VtZXIiICJOYXPFgnVjaHVqZSBuYSB6ZGFyemVuaWEgdXR3b3J6ZW5pYSB6YW3Ds3dpZW5pYS4iICJhaW8tcGlrYSIgIkNvbXBvbmVudCIKICAgICAgICAgICAgICAgICAgICBwYXltZW50UHJvZHVjZXIgPSBjb21wb25lbnQgIlJhYmJpdE1RIFByb2R1Y2VyIiAiUHVibGlrdWplIHpkYXJ6ZW5pYSBvIHN0YXR1c2llIHDFgmF0bm/Fm2NpLiIgImFpby1waWthIiAiQ29tcG9uZW50IgogICAgCiAgICAgICAgICAgICAgICAgICAgcGF5bWVudENvbnN1bWVyIC0+IHBheW1lbnRQYXl1Q2xpZW50ICJJbmljanVqZSBwxYJhdG5vxZvEhyIKICAgICAgICAgICAgICAgICAgICBwYXltZW50QXBpIC0+IHBheW1lbnRQcm9kdWNlciAiRGVsZWd1amUgcHVibGlrYWNqxJkgemRhcnplbmlhIgogICAgICAgICAgICAgICAgfQogICAgCiAgICAgICAgICAgICAgICBzdGFmZlNlcnZpY2UgPSBjb250YWluZXIgIlN0YWZmIFNlcnZpY2UiICJTZXJ3aXMgZG8gemFyesSFZHphbmlhIHphbcOzd2llbmlhbWkgcHJ6ZXogcGVyc29uZWwuIiAiUHl0aG9uL0Zhc3RBUEkiICJNaWNyb3NlcnZpY2UiIHsKICAgICAgICAgICAgICAgICAgICBzdGFmZkFwaSA9IGNvbXBvbmVudCAiU3RhZmYgT3JkZXIgQ29udHJvbGxlciIgIk9ic8WCdWd1amUgxbzEhWRhbmlhIEFQSSBwZXJzb25lbHUuIiAiRmFzdEFQSSBSb3V0ZXIiICJDb21wb25lbnQiCiAgICAgICAgICAgICAgICAgICAgc3RhZmZSZXBvc2l0b3J5ID0gY29tcG9uZW50ICJPcmRlciBSZXBvc2l0b3J5IiAiWmFyesSFZHphIGxvZ2lrxIUgZG9zdMSZcHUgZG8gZGFueWNoIHphbcOzd2llxYQuIiAiU1FMQWxjaGVteSIgIkNvbXBvbmVudCIKICAgICAgICAgICAgICAgICAgICBzdGFmZlBlcm1pc3Npb25zID0gY29tcG9uZW50ICJQZXJtaXNzaW9uIFZhbGlkYXRvciIgIlNwcmF3ZHphIHVwcmF3bmllbmlhIHBlcnNvbmVsdS4iICJDdXN0b20gTG9naWMiICJDb21wb25lbnQiCiAgICAgICAgICAgICAgICAgICAgc3RhZmZQcm9kdWNlciA9IGNvbXBvbmVudCAiUmFiYml0TVEgUHJvZHVjZXIiICJQdWJsaWt1amUgemRhcnplbmlhIHBvIHptaWFuaWUgc3RhdHVzdS4iICJhaW8tcGlrYSIgIkNvbXBvbmVudCIKICAgICAgICAgICAgICAgICAgICBzdGFmZkNvbnN1bWVyID0gY29tcG9uZW50ICJSYWJiaXRNUSBDb25zdW1lciIgIk5hc8WCdWNodWplIG5hIHpkYXJ6ZW5pYS4iICJhaW8tcGlrYSIgIkNvbXBvbmVudCIKICAgIAogICAgICAgICAgICAgICAgICAgIHN0YWZmQXBpIC0+IHN0YWZmUGVybWlzc2lvbnMgIlNwcmF3ZHphIHVwcmF3bmllbmlhIgogICAgICAgICAgICAgICAgICAgIHN0YWZmQXBpIC0+IHN0YWZmUmVwb3NpdG9yeSAiUG9iaWVyYS9Ba3R1YWxpenVqZSBkYW5lIHphbcOzd2llxYQiCiAgICAgICAgICAgICAgICAgICAgc3RhZmZBcGkgLT4gc3RhZmZQcm9kdWNlciAiV3lzecWCYSB6ZGFyemVuaWUgbyB6bWlhbmllIHN0YXR1c3UiCiAgICAgICAgICAgICAgICAgICAgc3RhZmZDb25zdW1lciAtPiBzdGFmZlJlcG9zaXRvcnkgIkFrdHVhbGl6dWplIGxva2FsbsSFIGtvcGnEmSBkYW55Y2giCiAgICAgICAgICAgICAgICB9CiAgICAKICAgICAgICAgICAgICAgIG5vdGlmaWNhdGlvblNlcnZpY2UgPSBjb250YWluZXIgIk5vdGlmaWNhdGlvbiBTZXJ2aWNlIiAiU2Vyd2lzIGRvIHd5c3nFgmFuaWEgcG93aWFkb21pZcWELiIgIlB5dGhvbi9GYXN0QVBJIiAiTWljcm9zZXJ2aWNlIiB7CiAgICAgICAgICAgICAgICAgICAgbm90aWZpY2F0aW9uQ29uc3VtZXIgPSBjb21wb25lbnQgIlJhYmJpdE1RIENvbnN1bWVyIiAiT2RiaWVyYSB3c3p5c3RraWUgemRhcnplbmlhLiIgImFpby1waWthIiAiQ29tcG9uZW50IgogICAgICAgICAgICAgICAgICAgIG5vdGlmaWNhdGlvblNuc0NsaWVudCA9IGNvbXBvbmVudCAiU05TIENsaWVudCIgIktsaWVudCBkbyB3eXN5xYJhbmlhIHBvd2lhZG9taWXFhCBwcnpleiBBV1MgU05TLiIgImJvdG8zIiAiQ29tcG9uZW50IgogICAgICAgICAgICAgICAgICAgIG5vdGlmaWNhdGlvblJlcG9zaXRvcnkgPSBjb21wb25lbnQgIk5vdGlmaWNhdGlvbiBSZXBvc2l0b3J5IiAiWmFwaXN1amUgaGlzdG9yacSZIHd5c8WCYW55Y2ggcG93aWFkb21pZcWELiIgIlNRTEFsY2hlbXkiICJDb21wb25lbnQiCiAgICAKICAgICAgICAgICAgICAgICAgICBub3RpZmljYXRpb25Db25zdW1lciAtPiBub3RpZmljYXRpb25TbnNDbGllbnQgIkRlbGVndWplIHd5c3nFgmvEmSBwb3dpYWRvbWllbmlhIgogICAgICAgICAgICAgICAgICAgIG5vdGlmaWNhdGlvbkNvbnN1bWVyIC0+IG5vdGlmaWNhdGlvblJlcG9zaXRvcnkgIlphcGlzdWplIGxvZyB3eXN5xYJraSIKICAgICAgICAgICAgICAgIH0KICAgIAogICAgICAgICAgICAgICAgbWVzc2FnZUJ1cyA9IGNvbnRhaW5lciAiQnJva2VyIFdpYWRvbW/Fm2NpIiAiQXN5bmNocm9uaWN6bmEga29tdW5pa2FjamEuIiAiUmFiYml0TVEiICJNZXNzYWdlQnVzIgogICAgICAgICAgICAgICAgZGF0YWJhc2UgPSBjb250YWluZXIgIkJhemEgRGFueWNoIiAiUHJ6ZWNob3d1amUgZGFuZSB3IG9kaXpvbG93YW55Y2ggc2NoZW1hdGFjaC4iICJQb3N0Z3JlU1FMIiAiRGF0YWJhc2UiCiAgICAKICAgICAgICAgICAgICAgIGFwaUdhdGV3YXkgLT4gYXV0aFNlcnZpY2UgIlByemVraWVyb3d1amUgxbzEhWRhbmlhIHV3aWVyenl0ZWxuaWFuaWEiICJIVFRQUyIKICAgICAgICAgICAgICAgIGFwaUdhdGV3YXkgLT4gb3JkZXJTZXJ2aWNlICJQcnpla2llcm93dWplIMW8xIVkYW5pYSBkb3QuIHphbcOzd2llxYQiICJIVFRQUyIKICAgICAgICAgICAgICAgIGFwaUdhdGV3YXkgLT4gc3RhZmZTZXJ2aWNlICJQcnpla2llcm93dWplIMW8xIVkYW5pYSBwZXJzb25lbHUiICJIVFRQUyIKICAgIAogICAgICAgICAgICAgICAgYXV0aFNlcnZpY2UgLT4gZGF0YWJhc2UgIkN6eXRhL1phcGlzdWplIGRhbmUgdcW8eXRrb3duaWvDs3ciICJKREJDIgogICAgICAgICAgICAgICAgb3JkZXJTZXJ2aWNlIC0+IGRhdGFiYXNlICJDenl0YS9aYXBpc3VqZSBkYW5lIHphbcOzd2llxYQiICJKREJDIgogICAgICAgICAgICAgICAgc3RhZmZTZXJ2aWNlIC0+IGRhdGFiYXNlICJDenl0YS9aYXBpc3VqZSBkYW5lIHphbcOzd2llxYQiICJKREJDIgogICAgICAgICAgICAgICAgbm90aWZpY2F0aW9uU2VydmljZSAtPiBkYXRhYmFzZSAiWmFwaXN1amUgbG9naSBwb3dpYWRvbWllxYQiICJKREJDIgogICAgCiAgICAgICAgICAgICAgICBvcmRlclNlcnZpY2UgLT4gbWVzc2FnZUJ1cyAiUHVibGlrdWplICdvcmRlcl9jcmVhdGVkJyIgIkFNUVAiCiAgICAgICAgICAgICAgICBwYXltZW50U2VydmljZSAtPiBtZXNzYWdlQnVzICJQdWJsaWt1amUgJ3BheW1lbnRfc3RhdHVzX2NoYW5nZWQnIiAiQU1RUCIKICAgICAgICAgICAgICAgIHN0YWZmU2VydmljZSAtPiBtZXNzYWdlQnVzICJQdWJsaWt1amUgJ3N0YWZmX3N0YXR1c19jaGFuZ2VkJyIgIkFNUVAiCiAgICAKICAgICAgICAgICAgICAgIG1lc3NhZ2VCdXMgLT4gcGF5bWVudFNlcnZpY2UgIkRvc3RhcmN6YSAnb3JkZXJfY3JlYXRlZCciICJBTVFQIgogICAgICAgICAgICAgICAgbWVzc2FnZUJ1cyAtPiBvcmRlclNlcnZpY2UgIkRvc3RhcmN6YSB6ZGFyemVuaWEgbyB6bWlhbmllIHN0YXR1c3UiICJBTVFQIgogICAgICAgICAgICAgICAgbWVzc2FnZUJ1cyAtPiBzdGFmZlNlcnZpY2UgIkRvc3RhcmN6YSB6ZGFyemVuaWEgbyB6bWlhbmllIHN0YXR1c3UiICJBTVFQIgogICAgICAgICAgICAgICAgbWVzc2FnZUJ1cyAtPiBub3RpZmljYXRpb25TZXJ2aWNlICJEb3N0YXJjemEgd3N6eXN0a2llIHpkYXJ6ZW5pYSIgIkFNUVAiCiAgICAgICAgICAgIH0KICAgICAgICB9CiAgICAKICAgICAgICBjbGllbnREZXZpY2UgPSBzb2Z0d2FyZVN5c3RlbSAiUHJ6ZWdsxIVkYXJrYSAvIEFwbGlrYWNqYSIgIkludGVyZmVqcyB1xbx5dGtvd25pa2EuIiAiU29mdHdhcmVTeXN0ZW1FeHRlcm5hbCIKICAgICAgICBwYXltZW50R2F0ZXdheSA9IHNvZnR3YXJlU3lzdGVtICJQYXlVIiAiWmV3bsSZdHJ6bnkgc3lzdGVtIGRvIHByemV0d2FyemFuaWEgcMWCYXRub8WbY2kuIiAiU29mdHdhcmVTeXN0ZW1FeHRlcm5hbCIKICAgICAgICBub3RpZmljYXRpb25HYXRld2F5ID0gc29mdHdhcmVTeXN0ZW0gIkFXUyBTTlMiICJaZXduxJl0cnpuYSB1c8WCdWdhIGRvIHd5c3nFgmFuaWEgcG93aWFkb21pZcWELiIgIlNvZnR3YXJlU3lzdGVtRXh0ZXJuYWwiCiAgICAKICAgICAgICBjbGllbnQgLT4gY2xpZW50RGV2aWNlICJVxbx5d2EiCiAgICAgICAgc3RhZmYgLT4gY2xpZW50RGV2aWNlICJVxbx5d2EiCiAgICAgICAgY2xpZW50RGV2aWNlIC0+IG9yZGVyaW5nU3lzdGVtICJXeXN5xYJhIMW8xIVkYW5pYSBBUEkiICJIVFRQUy9KU09OIgogICAgICAgIG9yZGVyaW5nU3lzdGVtIC0+IHBheW1lbnRHYXRld2F5ICJQcnpldHdhcnphIHDFgmF0bm/Fm2NpIiAiSFRUUFMvSlNPTiIKICAgICAgICBwYXltZW50R2F0ZXdheSAtPiBvcmRlcmluZ1N5c3RlbSAiT2RiaWVyYSBwb3dpYWRvbWllbmlhIiAiV2ViaG9vayIKICAgICAgICBvcmRlcmluZ1N5c3RlbSAtPiBub3RpZmljYXRpb25HYXRld2F5ICJXeXN5xYJhIHBvd2lhZG9taWVuaWEiICJIVFRQUy9KU09OIgogICAgICAgIG5vdGlmaWNhdGlvbkdhdGV3YXkgLT4gY2xpZW50ICJEb3N0YXJjemEgcG93aWFkb21pZW5pZSIgIlNNUyIKICAgIH0KICAgIC8vIHZpZXdzLmRzbAogICAgCiAgICB2aWV3cyB7CiAgICAgICAgc3lzdGVtQ29udGV4dCBvcmRlcmluZ1N5c3RlbSAiU3lzdGVtQ29udGV4dCIgIkRpYWdyYW0gS29udGVrc3R1IFN5c3RlbXUgZGxhIFN5c3RlbXUgWmFtYXdpYW5pYSBKZWR6ZW5pYS4iIHsKICAgICAgICAgICAgaW5jbHVkZSAqCiAgICAgICAgICAgIGF1dG9sYXlvdXQgbHIKICAgICAgICB9CiAgICAKICAgICAgICBjb250YWluZXIgb3JkZXJpbmdTeXN0ZW0gIkNvbnRhaW5lcnMiICJEaWFncmFtIEtvbnRlbmVyw7N3IGRsYSBTeXN0ZW11IFphbWF3aWFuaWEgSmVkemVuaWEuIiB7CiAgICAgICAgICAgIGluY2x1ZGUgKgogICAgICAgICAgICBhdXRvbGF5b3V0IGxyCiAgICAgICAgfQogICAgCiAgICAgICAgY29tcG9uZW50IGF1dGhTZXJ2aWNlICJBdXRoU2VydmljZUNvbXBvbmVudHMiICJEaWFncmFtIEtvbXBvbmVudMOzdyBkbGEgQXV0aCBTZXJ2aWNlLiIgewogICAgICAgICAgICBpbmNsdWRlICoKICAgICAgICAgICAgYXV0b2xheW91dCBscgogICAgICAgIH0KICAgIAogICAgICAgIGNvbXBvbmVudCBvcmRlclNlcnZpY2UgIk9yZGVyU2VydmljZUNvbXBvbmVudHMiICJEaWFncmFtIEtvbXBvbmVudMOzdyBkbGEgT3JkZXIgU2VydmljZS4iIHsKICAgICAgICAgICAgaW5jbHVkZSAqCiAgICAgICAgICAgIGF1dG9sYXlvdXQgbHIKICAgICAgICB9CiAgICAKICAgICAgICBjb21wb25lbnQgcGF5bWVudFNlcnZpY2UgIlBheW1lbnRTZXJ2aWNlQ29tcG9uZW50cyIgIkRpYWdyYW0gS29tcG9uZW50w7N3IGRsYSBQYXltZW50IFNlcnZpY2UuIiB7CiAgICAgICAgICAgIGluY2x1ZGUgKgogICAgICAgICAgICBhdXRvbGF5b3V0IGxyCiAgICAgICAgfQogICAgCiAgICAgICAgY29tcG9uZW50IHN0YWZmU2VydmljZSAiU3RhZmZTZXJ2aWNlQ29tcG9uZW50cyIgIkRpYWdyYW0gS29tcG9uZW50w7N3IGRsYSBTdGFmZiBTZXJ2aWNlLiIgewogICAgICAgICAgICBpbmNsdWRlICoKICAgICAgICAgICAgYXV0b2xheW91dCBscgogICAgICAgIH0KICAgIAogICAgICAgIGNvbXBvbmVudCBub3RpZmljYXRpb25TZXJ2aWNlICJOb3RpZmljYXRpb25TZXJ2aWNlQ29tcG9uZW50cyIgIkRpYWdyYW0gS29tcG9uZW50w7N3IGRsYSBOb3RpZmljYXRpb24gU2VydmljZS4iIHsKICAgICAgICAgICAgaW5jbHVkZSAqCiAgICAgICAgICAgIGF1dG9sYXlvdXQgbHIKICAgICAgICB9CiAgICAKICAgICAgICBzdHlsZXMgewogICAgICAgICAgICBlbGVtZW50ICJQZXJzb24iIHsKICAgICAgICAgICAgICAgIHNoYXBlIFBlcnNvbgogICAgICAgICAgICAgICAgYmFja2dyb3VuZCAjMDg0MjdiCiAgICAgICAgICAgICAgICBjb2xvciAjZmZmZmZmCiAgICAgICAgICAgIH0KICAgICAgICAgICAgZWxlbWVudCAiU29mdHdhcmVTeXN0ZW1JbnRlcm5hbCIgewogICAgICAgICAgICAgICAgYmFja2dyb3VuZCAjMTE2OGJkCiAgICAgICAgICAgICAgICBjb2xvciAjZmZmZmZmCiAgICAgICAgICAgIH0KICAgICAgICAgICAgZWxlbWVudCAiU29mdHdhcmVTeXN0ZW1FeHRlcm5hbCIgewogICAgICAgICAgICAgICAgYmFja2dyb3VuZCAjOTk5OTk5CiAgICAgICAgICAgICAgICBjb2xvciAjZmZmZmZmCiAgICAgICAgICAgIH0KICAgICAgICAgICAgZWxlbWVudCAiQ29udGFpbmVyIiB7CiAgICAgICAgICAgICAgICBiYWNrZ3JvdW5kICM0MzhkZDUKICAgICAgICAgICAgICAgIGNvbG9yICNmZmZmZmYKICAgICAgICAgICAgfQogICAgICAgICAgICBlbGVtZW50ICJHYXRld2F5IiB7CiAgICAgICAgICAgICAgICBzaGFwZSBXZWJCcm93c2VyCiAgICAgICAgICAgIH0KICAgICAgICAgICAgZWxlbWVudCAiRGF0YWJhc2UiIHsKICAgICAgICAgICAgICAgIHNoYXBlIEN5bGluZGVyCiAgICAgICAgICAgICAgICBiYWNrZ3JvdW5kICNmZjAwMDAKICAgICAgICAgICAgfQogICAgICAgICAgICBlbGVtZW50ICJNZXNzYWdlQnVzIiB7CiAgICAgICAgICAgICAgICBzaGFwZSBQaXBlCiAgICAgICAgICAgICAgICBiYWNrZ3JvdW5kICNmZjY2MDAKICAgICAgICAgICAgfQogICAgICAgICAgICBlbGVtZW50ICJDb21wb25lbnQiIHsKICAgICAgICAgICAgICAgIGJhY2tncm91bmQgIzg1YmJmMAogICAgICAgICAgICAgICAgY29sb3IgIzAwMDAwMAogICAgICAgICAgICB9CiAgICAgICAgfQogICAgCiAgICAgICAgdGhlbWUgZGVmYXVsdAogICAgfQoKfQ=="
   },
   "views" : {
     "componentViews" : [ {
-      "containerId" : "7",
-      "description" : "Diagram Komponentów C4 - Poziom 3 (Auth Service)",
+      "automaticLayout" : {
+        "applied" : true,
+        "edgeSeparation" : 0,
+        "implementation" : "Graphviz",
+        "nodeSeparation" : 300,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 300,
+        "vertices" : false
+      },
+      "containerId" : "5",
+      "description" : "Diagram Komponentów dla Auth Service.",
       "dimensions" : {
-        "height" : 2800,
-        "width" : 1340
+        "height" : 1411,
+        "width" : 2390
       },
       "elements" : [ {
         "id" : "6",
-        "x" : 445,
-        "y" : 1
-      }, {
-        "id" : "8",
-        "x" : 445,
-        "y" : 601
-      }, {
-        "id" : "9",
-        "x" : 820,
-        "y" : 1201
-      }, {
-        "id" : "10",
-        "x" : 820,
-        "y" : 1801
-      }, {
-        "id" : "11",
-        "x" : 70,
-        "y" : 1201
-      }, {
-        "id" : "12",
-        "x" : 70,
-        "y" : 1801
-      }, {
-        "id" : "22",
-        "x" : 70,
-        "y" : 2375
-      } ],
-      "externalContainerBoundariesVisible" : false,
-      "key" : "AuthComponents",
-      "order" : 3,
-      "relationships" : [ {
-        "id" : "13"
-      }, {
-        "id" : "14"
-      }, {
-        "id" : "15"
-      }, {
-        "id" : "16"
-      }, {
-        "id" : "42"
-      }, {
-        "id" : "51"
-      } ]
-    } ],
-    "configuration" : {
-      "branding" : { },
-      "lastSavedView" : "AuthComponents",
-      "styles" : {
-        "elements" : [ {
-          "background" : "#5191fa",
-          "color" : "#ffffff",
-          "shape" : "Person",
-          "tag" : "Person"
-        }, {
-          "background" : "#8a2be2",
-          "color" : "#ffffff",
-          "shape" : "Box",
-          "tag" : "Software System"
-        }, {
-          "background" : "#9a28f8",
-          "color" : "#ffffff",
-          "shape" : "Box",
-          "tag" : "Container"
-        }, {
-          "background" : "#4b0082",
-          "color" : "#ffffff",
-          "shape" : "Cylinder",
-          "tag" : "Database"
-        }, {
-          "background" : "#b36afb",
-          "color" : "#ffffff",
-          "shape" : "Component",
-          "tag" : "Component"
-        } ]
-      },
-      "terminology" : { }
-    },
-    "containerViews" : [ {
-      "description" : "Diagram Kontenerów C4 - Poziom 2",
-      "dimensions" : {
-        "height" : 2930,
-        "width" : 3795
-      },
-      "elements" : [ {
-        "id" : "1",
-        "x" : 2140,
-        "y" : 45
-      }, {
-        "id" : "2",
-        "x" : 2275,
-        "y" : 2575
-      }, {
-        "id" : "3",
-        "x" : 55,
-        "y" : 2145
-      }, {
-        "id" : "4",
-        "x" : 55,
-        "y" : 640
-      }, {
-        "id" : "6",
-        "x" : 2115,
-        "y" : 645
+        "x" : 220,
+        "y" : 472
       }, {
         "id" : "7",
-        "x" : 840,
-        "y" : 1150
+        "x" : 970,
+        "y" : 472
+      }, {
+        "id" : "8",
+        "x" : 1720,
+        "y" : 772
+      }, {
+        "id" : "9",
+        "x" : 1720,
+        "y" : 172
+      } ],
+      "externalContainerBoundariesVisible" : false,
+      "key" : "AuthServiceComponents",
+      "order" : 3,
+      "relationships" : [ {
+        "id" : "10"
+      }, {
+        "id" : "11"
+      }, {
+        "id" : "12"
+      } ]
+    }, {
+      "automaticLayout" : {
+        "applied" : true,
+        "edgeSeparation" : 0,
+        "implementation" : "Graphviz",
+        "nodeSeparation" : 300,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 300,
+        "vertices" : false
+      },
+      "containerId" : "13",
+      "description" : "Diagram Komponentów dla Order Service.",
+      "dimensions" : {
+        "height" : 1411,
+        "width" : 1640
+      },
+      "elements" : [ {
+        "id" : "14",
+        "x" : 220,
+        "y" : 172
+      }, {
+        "id" : "15",
+        "x" : 970,
+        "y" : 772
+      }, {
+        "id" : "16",
+        "x" : 970,
+        "y" : 172
       }, {
         "id" : "17",
-        "x" : 2525,
-        "y" : 1150
+        "x" : 220,
+        "y" : 772
+      } ],
+      "externalContainerBoundariesVisible" : false,
+      "key" : "OrderServiceComponents",
+      "order" : 4,
+      "relationships" : [ {
+        "id" : "18"
       }, {
-        "id" : "18",
-        "x" : 3280,
-        "y" : 1150
+        "id" : "19"
       }, {
-        "id" : "19",
-        "x" : 1690,
-        "y" : 1150
-      }, {
-        "id" : "20",
-        "x" : 2525,
-        "y" : 1675
-      }, {
-        "id" : "21",
-        "x" : 1215,
-        "y" : 1675
-      }, {
+        "id" : "20"
+      } ]
+    }, {
+      "automaticLayout" : {
+        "applied" : true,
+        "edgeSeparation" : 0,
+        "implementation" : "Graphviz",
+        "nodeSeparation" : 300,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 300,
+        "vertices" : false
+      },
+      "containerId" : "21",
+      "description" : "Diagram Komponentów dla Payment Service.",
+      "dimensions" : {
+        "height" : 1411,
+        "width" : 1640
+      },
+      "elements" : [ {
         "id" : "22",
-        "x" : 575,
-        "y" : 1675
+        "x" : 220,
+        "y" : 172
       }, {
         "id" : "23",
-        "x" : 3280,
-        "y" : 660
+        "x" : 970,
+        "y" : 772
       }, {
         "id" : "24",
-        "x" : 3280,
-        "y" : 1675
+        "x" : 220,
+        "y" : 772
       }, {
         "id" : "25",
-        "x" : 1875,
-        "y" : 1675
-      }, {
-        "id" : "26",
-        "x" : 2885,
-        "y" : 2140
-      }, {
-        "id" : "27",
-        "x" : 1215,
-        "y" : 2140
+        "x" : 970,
+        "y" : 172
       } ],
-      "externalSoftwareSystemBoundariesVisible" : false,
-      "key" : "Containers",
-      "order" : 2,
+      "externalContainerBoundariesVisible" : false,
+      "key" : "PaymentServiceComponents",
+      "order" : 5,
       "relationships" : [ {
-        "id" : "28"
+        "id" : "26"
       }, {
-        "id" : "29"
+        "id" : "27"
+      } ]
+    }, {
+      "automaticLayout" : {
+        "applied" : true,
+        "edgeSeparation" : 0,
+        "implementation" : "Graphviz",
+        "nodeSeparation" : 300,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 300,
+        "vertices" : false
+      },
+      "containerId" : "28",
+      "description" : "Diagram Komponentów dla Staff Service.",
+      "dimensions" : {
+        "height" : 2011,
+        "width" : 1640
+      },
+      "elements" : [ {
+        "id" : "29",
+        "x" : 219,
+        "y" : 771
       }, {
         "id" : "30",
-        "vertices" : [ {
-          "x" : 2700,
-          "y" : 980
-        } ]
+        "x" : 969,
+        "y" : 1371
       }, {
-        "id" : "31"
+        "id" : "31",
+        "x" : 969,
+        "y" : 771
       }, {
-        "id" : "32"
+        "id" : "32",
+        "x" : 969,
+        "y" : 171
       }, {
-        "id" : "33"
-      }, {
+        "id" : "33",
+        "x" : 219,
+        "y" : 1371
+      } ],
+      "externalContainerBoundariesVisible" : false,
+      "key" : "StaffServiceComponents",
+      "order" : 6,
+      "relationships" : [ {
         "id" : "34"
       }, {
         "id" : "35"
@@ -618,65 +787,265 @@
         "id" : "36"
       }, {
         "id" : "37"
+      } ]
+    }, {
+      "automaticLayout" : {
+        "applied" : true,
+        "edgeSeparation" : 0,
+        "implementation" : "Graphviz",
+        "nodeSeparation" : 300,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 300,
+        "vertices" : false
+      },
+      "containerId" : "38",
+      "description" : "Diagram Komponentów dla Notification Service.",
+      "dimensions" : {
+        "height" : 1411,
+        "width" : 1640
+      },
+      "elements" : [ {
+        "id" : "39",
+        "x" : 220,
+        "y" : 472
       }, {
-        "id" : "38"
+        "id" : "40",
+        "x" : 970,
+        "y" : 772
       }, {
-        "id" : "39"
-      }, {
-        "id" : "40"
-      }, {
-        "id" : "41"
+        "id" : "41",
+        "x" : 970,
+        "y" : 172
+      } ],
+      "externalContainerBoundariesVisible" : false,
+      "key" : "NotificationServiceComponents",
+      "order" : 7,
+      "relationships" : [ {
+        "id" : "42"
       }, {
         "id" : "43"
+      } ]
+    } ],
+    "configuration" : {
+      "branding" : { },
+      "lastSavedView" : "SystemContext",
+      "metadataSymbols" : "SquareBrackets",
+      "styles" : {
+        "elements" : [ {
+          "background" : "#08427b",
+          "color" : "#ffffff",
+          "shape" : "Person",
+          "tag" : "Person"
+        }, {
+          "background" : "#1168bd",
+          "color" : "#ffffff",
+          "tag" : "SoftwareSystemInternal"
+        }, {
+          "background" : "#999999",
+          "color" : "#ffffff",
+          "tag" : "SoftwareSystemExternal"
+        }, {
+          "background" : "#438dd5",
+          "color" : "#ffffff",
+          "tag" : "Container"
+        }, {
+          "shape" : "WebBrowser",
+          "tag" : "Gateway"
+        }, {
+          "background" : "#ff0000",
+          "shape" : "Cylinder",
+          "tag" : "Database"
+        }, {
+          "background" : "#ff6600",
+          "shape" : "Pipe",
+          "tag" : "MessageBus"
+        }, {
+          "background" : "#85bbf0",
+          "color" : "#000000",
+          "tag" : "Component"
+        } ]
+      },
+      "terminology" : { },
+      "themes" : [ "https://static.structurizr.com/themes/default/theme.json" ]
+    },
+    "containerViews" : [ {
+      "automaticLayout" : {
+        "applied" : true,
+        "edgeSeparation" : 0,
+        "implementation" : "Graphviz",
+        "nodeSeparation" : 300,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 300,
+        "vertices" : false
+      },
+      "description" : "Diagram Kontenerów dla Systemu Zamawiania Jedzenia.",
+      "dimensions" : {
+        "height" : 2627,
+        "width" : 3890
+      },
+      "elements" : [ {
+        "id" : "4",
+        "x" : 219,
+        "y" : 1388
       }, {
-        "id" : "45"
+        "id" : "5",
+        "x" : 1719,
+        "y" : 172
+      }, {
+        "id" : "13",
+        "x" : 969,
+        "y" : 1388
+      }, {
+        "id" : "21",
+        "x" : 2469,
+        "y" : 1388
+      }, {
+        "id" : "28",
+        "x" : 2469,
+        "y" : 1988
+      }, {
+        "id" : "38",
+        "x" : 2469,
+        "y" : 788
+      }, {
+        "id" : "44",
+        "x" : 1719,
+        "y" : 1388
+      }, {
+        "id" : "45",
+        "x" : 3219,
+        "y" : 563
+      } ],
+      "externalSoftwareSystemBoundariesVisible" : false,
+      "key" : "Containers",
+      "order" : 2,
+      "relationships" : [ {
+        "id" : "46"
       }, {
         "id" : "47"
       }, {
-        "id" : "50"
+        "id" : "48",
+        "vertices" : [ {
+          "x" : 969,
+          "y" : 1838
+        } ]
+      }, {
+        "id" : "49",
+        "vertices" : [ {
+          "x" : 2919,
+          "y" : 405
+        } ]
+      }, {
+        "id" : "50",
+        "vertices" : [ {
+          "x" : 2469,
+          "y" : 638
+        }, {
+          "x" : 2919,
+          "y" : 638
+        } ]
+      }, {
+        "id" : "51",
+        "vertices" : [ {
+          "x" : 2919,
+          "y" : 1838
+        } ]
+      }, {
+        "id" : "52"
+      }, {
+        "id" : "53",
+        "vertices" : [ {
+          "x" : 1569,
+          "y" : 1688
+        } ]
+      }, {
+        "id" : "54",
+        "vertices" : [ {
+          "x" : 2319,
+          "y" : 1388
+        } ]
+      }, {
+        "id" : "55",
+        "vertices" : [ {
+          "x" : 2412,
+          "y" : 1720
+        } ]
+      }, {
+        "id" : "56",
+        "vertices" : [ {
+          "x" : 2319,
+          "y" : 1688
+        } ]
+      }, {
+        "id" : "57",
+        "vertices" : [ {
+          "x" : 1569,
+          "y" : 1388
+        } ]
+      }, {
+        "id" : "58",
+        "vertices" : [ {
+          "x" : 2225,
+          "y" : 1955
+        } ]
+      }, {
+        "id" : "59"
       } ],
-      "softwareSystemId" : "5"
+      "softwareSystemId" : "3"
     } ],
     "systemContextViews" : [ {
-      "description" : "Diagram Kontekstowy C4 - Poziom 1",
+      "automaticLayout" : {
+        "applied" : true,
+        "edgeSeparation" : 0,
+        "implementation" : "Graphviz",
+        "nodeSeparation" : 300,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 300,
+        "vertices" : false
+      },
+      "description" : "Diagram Kontekstu Systemu dla Systemu Zamawiania Jedzenia.",
       "dimensions" : {
-        "height" : 1600,
-        "width" : 2000
+        "height" : 1300,
+        "width" : 2350
       },
       "elements" : [ {
-        "id" : "1",
-        "x" : 45,
-        "y" : 595
-      }, {
-        "id" : "2",
-        "x" : 1495,
-        "y" : 45
-      }, {
         "id" : "3",
-        "x" : 1495,
-        "y" : 645
+        "x" : 950,
+        "y" : 452
       }, {
-        "id" : "4",
-        "x" : 1495,
-        "y" : 1245
+        "id" : "60",
+        "x" : 200,
+        "y" : 452
       }, {
-        "id" : "5",
-        "x" : 745,
-        "y" : 645
+        "id" : "61",
+        "x" : 1700,
+        "y" : 152
+      }, {
+        "id" : "62",
+        "x" : 1700,
+        "y" : 752
       } ],
       "enterpriseBoundaryVisible" : true,
       "key" : "SystemContext",
       "order" : 1,
       "relationships" : [ {
-        "id" : "44"
+        "id" : "65"
       }, {
-        "id" : "46"
+        "id" : "66",
+        "vertices" : [ {
+          "x" : 1605,
+          "y" : 591
+        } ]
       }, {
-        "id" : "48"
+        "id" : "67",
+        "vertices" : [ {
+          "x" : 1494,
+          "y" : 312
+        } ]
       }, {
-        "id" : "49"
+        "id" : "68"
       } ],
-      "softwareSystemId" : "5"
+      "softwareSystemId" : "3"
     } ]
   }
 }
