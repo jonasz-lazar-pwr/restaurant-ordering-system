@@ -4,7 +4,7 @@
   "documentation" : { },
   "id" : 1,
   "lastModifiedAgent" : "structurizr-ui",
-  "lastModifiedDate" : "2025-06-22T18:42:58Z",
+  "lastModifiedDate" : "2025-06-22T18:46:36Z",
   "model" : {
     "people" : [ {
       "description" : "Osoba składająca zamówienie w restauracji.",
@@ -828,7 +828,7 @@
     } ],
     "configuration" : {
       "branding" : { },
-      "lastSavedView" : "SystemContext",
+      "lastSavedView" : "NotificationServiceComponents",
       "metadataSymbols" : "SquareBrackets",
       "styles" : {
         "elements" : [ {
@@ -886,35 +886,35 @@
       "elements" : [ {
         "id" : "4",
         "x" : 219,
-        "y" : 1388
+        "y" : 1387
       }, {
         "id" : "5",
         "x" : 1719,
-        "y" : 172
+        "y" : 171
       }, {
         "id" : "13",
         "x" : 969,
-        "y" : 1388
+        "y" : 1387
       }, {
         "id" : "21",
         "x" : 2469,
-        "y" : 1388
+        "y" : 1387
       }, {
         "id" : "28",
         "x" : 2469,
-        "y" : 1988
+        "y" : 1987
       }, {
         "id" : "38",
         "x" : 2469,
-        "y" : 788
+        "y" : 787
       }, {
         "id" : "44",
         "x" : 1719,
-        "y" : 1388
+        "y" : 1387
       }, {
         "id" : "45",
         "x" : 3219,
-        "y" : 563
+        "y" : 562
       } ],
       "externalSoftwareSystemBoundariesVisible" : false,
       "key" : "Containers",
@@ -927,28 +927,28 @@
         "id" : "48",
         "vertices" : [ {
           "x" : 969,
-          "y" : 1838
+          "y" : 1837
         } ]
       }, {
         "id" : "49",
         "vertices" : [ {
           "x" : 2919,
-          "y" : 405
+          "y" : 404
         } ]
       }, {
         "id" : "50",
         "vertices" : [ {
           "x" : 2469,
-          "y" : 638
+          "y" : 637
         }, {
           "x" : 2919,
-          "y" : 638
+          "y" : 637
         } ]
       }, {
         "id" : "51",
         "vertices" : [ {
           "x" : 2919,
-          "y" : 1838
+          "y" : 1837
         } ]
       }, {
         "id" : "52"
@@ -956,37 +956,37 @@
         "id" : "53",
         "vertices" : [ {
           "x" : 1569,
-          "y" : 1688
+          "y" : 1687
         } ]
       }, {
         "id" : "54",
         "vertices" : [ {
           "x" : 2319,
-          "y" : 1388
+          "y" : 1387
         } ]
       }, {
         "id" : "55",
         "vertices" : [ {
           "x" : 2412,
-          "y" : 1720
+          "y" : 1719
         } ]
       }, {
         "id" : "56",
         "vertices" : [ {
           "x" : 2319,
-          "y" : 1688
+          "y" : 1687
         } ]
       }, {
         "id" : "57",
         "vertices" : [ {
           "x" : 1569,
-          "y" : 1388
+          "y" : 1387
         } ]
       }, {
         "id" : "58",
         "vertices" : [ {
           "x" : 2225,
-          "y" : 1955
+          "y" : 1954
         } ]
       }, {
         "id" : "59"
