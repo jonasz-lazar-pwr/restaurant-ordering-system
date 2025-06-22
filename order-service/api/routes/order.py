@@ -2,25 +2,8 @@
 
 """
 Order endpoints for the Order Service.
-
-This module defines API routes for placing, retrieving, updating, and canceling orders.
-
-Endpoints:
-    POST   /order/               -> Place a new order (requires JWT)
-    GET    /order/me             -> Get all orders for a given table (requires JWT)
-    DELETE /order/{id}           -> Cancel an order (requires JWT)
-
-Features:
-- Creating a new order with multiple items for a specific table.
-- Retrieving all orders for a specific table with item and user details.
-- Allowing clients to cancel orders that are still in "pending" status.
-- QR code scanning to retrieve the current menu.
-
-Authorization:
-- All endpoints require a valid Bearer token (JWT) in the Authorization header,
-  except for the QR scan endpoint, which is public.
 """
-
+import httpx
 from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException, status, Header
@@ -31,52 +14,42 @@ from sqlalchemy.orm import selectinload
 from api.db.deps import get_db
 from api.core.config import settings
 from api.models import MenuItem, Order, OrderItem, OrderStatus, TableSession
-from api.schemas.order import OrderRequest, OrderResponse, OrderListResponse, OrderSummary, OrderDeletedOut
+from api.schemas.order import OrderRequest, OrderResponse, OrderListResponse, OrderSummary, OrderDeletedOut, PaymentMethod
 from api.utils.auth import extract_user_info
-from api.workers.producer import send_order_to_payment, send_order_status_notification
+from api.workers.producer import send_order_status_notification
+from api.utils.payment_payload_builder import build_payment_payload
 
 router = APIRouter()
-
 
 @router.post(
     "",
     response_model=OrderResponse,
     summary="Place an order",
-    description="Create a new order for a table with one or more menu items."
+    description="Create a new order. If payment method is 'online', it will synchronously call the payment service to get a payment link."
 )
-async def order_item(
+async def create_order(
     order_request: OrderRequest,
     db: AsyncSession = Depends(get_db),
     authorization: str = Header(...)
 ) -> OrderResponse:
-    """Create a new order based on the provided QR code and menu item IDs.
-
-    Args:
-        order_request (OrderRequest): Payload containing QR code, menu item IDs, quantities, comment, and payment method.
-        db (AsyncSession): SQLAlchemy async session.
-        authorization (str): JWT Bearer token.
-
-    Returns:
-        OrderResponse: Confirmation message and order ID.
-
-    Raises:
-        HTTPException: If any of the menu items do not exist.
+    """Create a new order. For online payments, it synchronously contacts the
+    Payment Service to generate and return a payment link.
     """
     user_info: Dict[str, Any] = extract_user_info(authorization)
     user_id = user_info["sub"]
-    user_email = user_info.get("email")
 
+    # --- 1. Validate menu items ---
     item_ids = [item.item_id for item in order_request.items]
     result = await db.execute(select(MenuItem).where(MenuItem.id.in_(item_ids)))
-    menu_items = {item.id: item for item in result.scalars().all()}
+    menu_items_dict = {item.id: item for item in result.scalars().all()}
 
-    if len(menu_items) != len(item_ids):
+    if len(menu_items_dict) != len(item_ids):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="One or more menu items not found."
         )
 
-    # Find table number from TableSession
+    # --- 2. Get table session ---
     session_result = await db.execute(
         select(TableSession).where(TableSession.user_id == user_id)
     )
@@ -86,17 +59,17 @@ async def order_item(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No active table session. Please scan QR code first."
         )
-    table_number = session.table_number
 
+    # --- 3. Create Order and OrderItems in DB ---
     db_order = Order(
-        table_number=table_number,
+        table_number=session.table_number,
         user_id=user_id,
         comment=order_request.comment,
-        payment_method=order_request.payment_method
+        payment_method=order_request.payment_method,
+        status=OrderStatus.pending
     )
-
     db.add(db_order)
-    await db.flush()  # Ensure order ID is available before adding items
+    await db.flush()  # To get db_order.id
 
     order_items = [
         OrderItem(
@@ -105,30 +78,56 @@ async def order_item(
             quantity=item.quantity
         ) for item in order_request.items
     ]
-
     db.add_all(order_items)
-    # await db.commit()
-    # await db.refresh(db_order)
+    await db.commit()
+    await db.refresh(db_order)
 
-    try:
-        await send_order_to_payment(
-            order_id=db_order.id,
-            db=db,
-            buyer_info={
+    payment_link = None
+    # --- 4. Handle Payment ---
+    if order_request.payment_method == PaymentMethod.online:
+        payment_payload = build_payment_payload(
+            order=db_order,
+            order_items=order_items,
+            menu_items=menu_items_dict,
+            buyer={
                 "email": user_info["email"],
                 "phone": settings.DEFAULT_PHONE_NUMBER,
                 "firstName": user_info.get("first_name"),
                 "lastName": user_info.get("last_name"),
                 "language": settings.DEFAULT_LANGUAGE
             },
-            customer_ip=settings.DEFAULT_CUSTOMER_IP
+            customer_ip=settings.DEFAULT_CUSTOMER_IP,
+            notify_url=settings.PAYMENT_NOTIFY_URL
         )
-    except Exception as e:
-        print(f"--- [order_item] CRITICAL ERROR: Could not send order {db_order.id} to queue: {e}")
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{settings.PAYMENT_SERVICE_URL}/payment",
+                    json=payment_payload
+                )
+                response.raise_for_status()
+                payment_link = response.json().get("payment_link")
+        except httpx.HTTPStatusError as e:
+            # If payment service fails, we should ideally compensate (e.g., mark order as failed).
+            db_order.status = OrderStatus.failed
+            await db.commit()
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"Payment service failed: {e.response.text}"
+            )
+        except Exception as e:
+            db_order.status = OrderStatus.failed
+            await db.commit()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"An unexpected error occurred while contacting payment service: {str(e)}"
+            )
 
     return OrderResponse(
-        message=f"Order placed successfully by {user_email} for table {table_number}.",
-        order_id=db_order.id
+        message=f"Order placed successfully by {user_info.get('email')} for table {session.table_number}.",
+        order_id=db_order.id,
+        payment_link=payment_link
     )
 
 
@@ -145,18 +144,6 @@ async def get_my_orders(
 ) -> OrderListResponse:
     """
     Retrieve all orders for the table currently assigned to the authenticated user.
-
-    The table is determined based on the last scanned QR code stored in the session.
-
-    Args:
-        db (AsyncSession): SQLAlchemy async session.
-        authorization (str): JWT Bearer token.
-
-    Returns:
-        OrderListResponse: All orders for the table with item summaries.
-
-    Raises:
-        HTTPException: If the user has no active session or no orders are found.
     """
     user_info: Dict[str, Any] = extract_user_info(authorization)
     user_id = user_info["sub"]
@@ -219,20 +206,6 @@ async def cancel_order(
 ) -> OrderDeletedOut:
     """
     Cancel an existing order by setting its status to 'cancelled'.
-
-    Only the user who created the order can cancel it, and only if it is still pending.
-
-    Args:
-        order_id (int): ID of the order to cancel.
-        db (AsyncSession): Async database session.
-        authorization (str): Bearer JWT token.
-
-    Returns:
-        OrderDeletedOut: Confirmation message and cancelled order ID.
-
-    Raises:
-        HTTPException: If the order does not exist, does not belong to the user,
-                       or is not in a cancellable state.
     """
     user_info = extract_user_info(authorization)
     user_id = user_info["sub"]

@@ -1,10 +1,4 @@
-# === api/workers/consumer.py ===
-
-"""RabbitMQ consumer for processing incoming payment requests.
-
-Consumes messages from the payment queue and delegates processing
-to the PayU client.
-"""
+# Plik: payment-service/api/workers/consumer.py
 
 import json
 import re
@@ -16,6 +10,9 @@ from aio_pika.abc import AbstractIncomingMessage
 from api.schemas.payment import CreatePaymentRequest
 from api.core.config import settings
 from api.services.payu import PayUClient
+# Importy do obsługi bazy danych
+from api.db.session import async_session
+from api.models.payment import Payment
 
 payu_client = PayUClient()
 
@@ -25,17 +22,8 @@ def extract_order_id_from_description(description: str) -> str | None:
     return match.group(1) if match else None
 
 
-async def handle_payment_message(payload: dict, db: dict) -> None:
-    """Handle a single payment message by creating a PayU order.
-
-    Args:
-        payload (dict): Parsed JSON payload representing a payment request.
-        db (dict): DB for storing payment links.
-
-    Raises:
-        ValidationError: If payload does not conform to CreatePaymentRequest.
-        PayUError: If PayU API call fails.
-    """
+async def handle_payment_message(payload: dict) -> None:
+    """Handle a single payment message by creating a PayU order and saving it to the database."""
     payment = CreatePaymentRequest(**payload)
 
     print(
@@ -63,21 +51,26 @@ async def handle_payment_message(payload: dict, db: dict) -> None:
         f"→ redirect: {redirect_uri}"
     )
 
-    if redirect_uri:
-        order_id = extract_order_id_from_description(payment.description)
-        if order_id:
-            db[order_id] = redirect_uri
-            print(f"[PaymentConsumer] Saved payment link for order_id: {order_id}")
+    if redirect_uri and payu_order_id:
+        order_id_str = extract_order_id_from_description(payment.description)
+        if order_id_str:
+            async with async_session() as session:
+                async with session.begin():
+                    new_payment = Payment(
+                        order_id=int(order_id_str),
+                        payu_order_id=payu_order_id,
+                        payment_link=redirect_uri,
+                        status="PENDING"
+                    )
+                    session.add(new_payment)
+                    await session.commit()
+                print(f"[PaymentConsumer] Saved payment details for order_id: {order_id_str} to the database.")
         else:
             print(f"[!] Could not extract order_id from description: {payment.description}")
 
 
-async def start_payment_consumer(db: dict) -> None:
-    """Start the RabbitMQ consumer for the payment queue.
-
-    Continuously listens for new messages and delegates them
-    to the `handle_payment_message` function.
-    """
+async def start_payment_consumer() -> None:
+    """Start the RabbitMQ consumer for the payment queue."""
     connection = await aio_pika.connect_robust(settings.RABBITMQ_URL)
     channel = await connection.channel()
     queue = await channel.declare_queue(settings.PAYMENT_QUEUE, durable=True)
@@ -87,6 +80,6 @@ async def start_payment_consumer(db: dict) -> None:
         async with message.process():
             try:
                 payload = json.loads(message.body.decode("utf-8"))
-                await handle_payment_message(payload, db)
+                await handle_payment_message(payload)
             except Exception as e:
                 print(f"[!] Failed to process payment message: {e}")

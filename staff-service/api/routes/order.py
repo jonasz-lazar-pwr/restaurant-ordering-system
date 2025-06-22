@@ -25,6 +25,14 @@ from api.schemas.order import OrderStatusUpdate
 from api.utils.auth import extract_user_info
 from api.utils.permissions import validate_role_permission
 from api.workers.producer import publish_status_update
+import json
+import aio_pika
+from api.core.config import settings
+from pydantic import BaseModel
+from api.utils.permissions import validate_role_permission, permission_dependency
+
+class RefundRequest(BaseModel):
+    reason: str
 
 router = APIRouter()
 
@@ -159,3 +167,35 @@ async def list_orders_for_staff(
         }
         for order in orders
     ]
+
+
+@router.post(
+    "/orders/{order_id}/refund",
+    summary="Request an order refund",
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[Depends(permission_dependency(roles=["chef"]))]
+)
+async def request_refund(order_id: int, refund_details: RefundRequest):
+    """
+    Sends a message to the refund queue to initiate a refund for an order.
+    """
+    try:
+        connection = await aio_pika.connect_robust(settings.RABBITMQ_URL)
+        async with connection:
+            channel = await connection.channel()
+            # Użyjemy nowej kolejki dla zwrotów
+            refund_queue_name = "refund_service_queue"
+            await channel.declare_queue(refund_queue_name, durable=True)
+
+            message_body = json.dumps({
+                "order_id": order_id,
+                "reason": refund_details.reason
+            }).encode()
+
+            await channel.default_exchange.publish(
+                aio_pika.Message(body=message_body),
+                routing_key=refund_queue_name
+            )
+        return {"status": "Refund request accepted and will be processed asynchronously."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to queue refund request: {e}")

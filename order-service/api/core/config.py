@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     JWT_ISSUER: str
     JWT_SECRET_KEY: str
 
+    # Service URLs
+    PAYMENT_SERVICE_URL: str
+
     # Other settings
     PAYMENT_NOTIFY_URL: str
     DEFAULT_PHONE_NUMBER: str

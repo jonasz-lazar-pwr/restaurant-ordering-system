@@ -4,9 +4,10 @@
 Permissions utility for role-based access control in the Staff Service.
 """
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Header
 from api.models.order_status import OrderStatus
 
+from api.utils.auth import extract_user_info
 
 # Allowed status transitions per role
 ROLE_PERMISSIONS = {
@@ -40,3 +41,18 @@ def validate_role_permission(role: str, new_status: OrderStatus) -> None:
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Role '{role}' is not allowed to set status '{new_status.value}'."
         )
+
+def permission_dependency(roles: list[str]):
+    """
+    Dependency factory for checking user roles.
+    Returns a dependency that verifies if the user's role is in the allowed list.
+    """
+    def check_roles(authorization: str = Header(...)) -> None:
+        user_info = extract_user_info(authorization)
+        user_role = user_info.get("role")
+        if user_role not in roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Role '{user_role}' is not authorized for this action. Allowed roles: {roles}"
+            )
+    return check_roles

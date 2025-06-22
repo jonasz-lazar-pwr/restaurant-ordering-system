@@ -4,7 +4,7 @@
   "documentation" : { },
   "id" : 1,
   "lastModifiedAgent" : "structurizr-ui",
-  "lastModifiedDate" : "2025-06-22T18:46:36Z",
+  "lastModifiedDate" : "2025-06-22T22:59:45Z",
   "model" : {
     "people" : [ {
       "description" : "Osoba składająca zamówienie w restauracji.",
@@ -657,7 +657,7 @@
       } ]
     }, {
       "automaticLayout" : {
-        "applied" : true,
+        "applied" : false,
         "edgeSeparation" : 0,
         "implementation" : "Graphviz",
         "nodeSeparation" : 300,
@@ -667,26 +667,22 @@
       },
       "containerId" : "13",
       "description" : "Diagram Komponentów dla Order Service.",
-      "dimensions" : {
-        "height" : 1411,
-        "width" : 1640
-      },
       "elements" : [ {
         "id" : "14",
-        "x" : 220,
-        "y" : 172
+        "x" : 0,
+        "y" : 0
       }, {
         "id" : "15",
-        "x" : 970,
-        "y" : 772
+        "x" : 0,
+        "y" : 0
       }, {
         "id" : "16",
-        "x" : 970,
-        "y" : 172
+        "x" : 0,
+        "y" : 0
       }, {
         "id" : "17",
-        "x" : 220,
-        "y" : 772
+        "x" : 0,
+        "y" : 0
       } ],
       "externalContainerBoundariesVisible" : false,
       "key" : "OrderServiceComponents",
@@ -700,7 +696,7 @@
       } ]
     }, {
       "automaticLayout" : {
-        "applied" : true,
+        "applied" : false,
         "edgeSeparation" : 0,
         "implementation" : "Graphviz",
         "nodeSeparation" : 300,
@@ -710,26 +706,22 @@
       },
       "containerId" : "21",
       "description" : "Diagram Komponentów dla Payment Service.",
-      "dimensions" : {
-        "height" : 1411,
-        "width" : 1640
-      },
       "elements" : [ {
         "id" : "22",
-        "x" : 220,
-        "y" : 172
+        "x" : 0,
+        "y" : 0
       }, {
         "id" : "23",
-        "x" : 970,
-        "y" : 772
+        "x" : 0,
+        "y" : 0
       }, {
         "id" : "24",
-        "x" : 220,
-        "y" : 772
+        "x" : 0,
+        "y" : 0
       }, {
         "id" : "25",
-        "x" : 970,
-        "y" : 172
+        "x" : 0,
+        "y" : 0
       } ],
       "externalContainerBoundariesVisible" : false,
       "key" : "PaymentServiceComponents",
@@ -741,7 +733,7 @@
       } ]
     }, {
       "automaticLayout" : {
-        "applied" : true,
+        "applied" : false,
         "edgeSeparation" : 0,
         "implementation" : "Graphviz",
         "nodeSeparation" : 300,
@@ -751,30 +743,26 @@
       },
       "containerId" : "28",
       "description" : "Diagram Komponentów dla Staff Service.",
-      "dimensions" : {
-        "height" : 2011,
-        "width" : 1640
-      },
       "elements" : [ {
         "id" : "29",
-        "x" : 219,
-        "y" : 771
+        "x" : 0,
+        "y" : 0
       }, {
         "id" : "30",
-        "x" : 969,
-        "y" : 1371
+        "x" : 0,
+        "y" : 0
       }, {
         "id" : "31",
-        "x" : 969,
-        "y" : 771
+        "x" : 0,
+        "y" : 0
       }, {
         "id" : "32",
-        "x" : 969,
-        "y" : 171
+        "x" : 0,
+        "y" : 0
       }, {
         "id" : "33",
-        "x" : 219,
-        "y" : 1371
+        "x" : 0,
+        "y" : 0
       } ],
       "externalContainerBoundariesVisible" : false,
       "key" : "StaffServiceComponents",
@@ -828,7 +816,7 @@
     } ],
     "configuration" : {
       "branding" : { },
-      "lastSavedView" : "NotificationServiceComponents",
+      "lastSavedView" : "Containers",
       "metadataSymbols" : "SquareBrackets",
       "styles" : {
         "elements" : [ {
@@ -995,7 +983,7 @@
     } ],
     "systemContextViews" : [ {
       "automaticLayout" : {
-        "applied" : true,
+        "applied" : false,
         "edgeSeparation" : 0,
         "implementation" : "Graphviz",
         "nodeSeparation" : 300,
@@ -1004,26 +992,22 @@
         "vertices" : false
       },
       "description" : "Diagram Kontekstu Systemu dla Systemu Zamawiania Jedzenia.",
-      "dimensions" : {
-        "height" : 1300,
-        "width" : 2350
-      },
       "elements" : [ {
         "id" : "3",
-        "x" : 950,
-        "y" : 452
+        "x" : 0,
+        "y" : 0
       }, {
         "id" : "60",
-        "x" : 200,
-        "y" : 452
+        "x" : 0,
+        "y" : 0
       }, {
         "id" : "61",
-        "x" : 1700,
-        "y" : 152
+        "x" : 0,
+        "y" : 0
       }, {
         "id" : "62",
-        "x" : 1700,
-        "y" : 752
+        "x" : 0,
+        "y" : 0
       } ],
       "enterpriseBoundaryVisible" : true,
       "key" : "SystemContext",
@@ -1031,17 +1015,9 @@
       "relationships" : [ {
         "id" : "65"
       }, {
-        "id" : "66",
-        "vertices" : [ {
-          "x" : 1605,
-          "y" : 591
-        } ]
+        "id" : "66"
       }, {
-        "id" : "67",
-        "vertices" : [ {
-          "x" : 1494,
-          "y" : 312
-        } ]
+        "id" : "67"
       }, {
         "id" : "68"
       } ],

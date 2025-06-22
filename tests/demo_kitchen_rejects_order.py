@@ -1,5 +1,3 @@
-# tests/demo_kitchen_rejects_order.py
-
 import httpx
 import time
 import jwt
@@ -27,7 +25,7 @@ except Exception as e:
 
 # --- Basic configuration ---
 BASE_URL = "http://localhost:8000"
-CUSTOMER_EMAIL = f"customer_reject_{int(time.time())}@example.com"
+CUSTOMER_EMAIL = f"customer_refund_{int(time.time())}@example.com"
 CHEF_EMAIL = "chef@example.com"
 
 CUSTOMER_DATA = {
@@ -36,18 +34,16 @@ CUSTOMER_DATA = {
     "first_name": "Anna",
     "last_name": "Kowalska"
 }
-# Data for registering the chef
 CHEF_REGISTER_DATA = {
     "email": CHEF_EMAIL,
-    "password": "chef_password_123",
+    "password": "chefpassword",
     "first_name": "Gordon",
     "last_name": "Ramsay",
     "role": "chef"
 }
-# Data for logging in the chef
 CHEF_LOGIN_DATA = {
     "username": CHEF_EMAIL,
-    "password": "chef_password_123"
+    "password": "chefpassword"
 }
 
 session_state = {}
@@ -59,13 +55,13 @@ def generate_qr_code_jwt(table_id: int) -> str:
     return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
-def run_kitchen_reject_demo():
+def run_kitchen_refund_demo():
     """
-    Demonstrates the compensation flow where the kitchen rejects a paid order,
-    resulting in its cancellation and a refund.
+    Demonstrates the compensation flow where the kitchen initiates a refund for a paid order.
     """
-    with httpx.Client() as client:
+    with httpx.Client(timeout=30.0) as client:
         # --- PART 0: Staff Registration ---
+        print("\n[INFO] Registering chef...")
         client.post(f"{BASE_URL}/auth/register", json=CHEF_REGISTER_DATA)
 
         # --- PART 1: Client places and pays for the order ---
@@ -93,34 +89,31 @@ def run_kitchen_reject_demo():
         order_data = {"items": [{"item_id": 1, "quantity": 1}], "payment_method": "online"}
         response = client.post(f"{BASE_URL}/order", headers=customer_headers, json=order_data)
         response.raise_for_status()
-        session_state['order_id'] = response.json()['order_id']
+
+        response_data = response.json()
+        session_state['order_id'] = response_data['order_id']
+        payment_link = response_data.get('payment_link')
         order_id = session_state['order_id']
         print(f"[SUCCESS] Created an order with ID: {order_id}")
 
-        # Step 3 - Pay for the order
-        print("\n[INFO] Waiting for payment link...")
-        payment_link = None
-        for _ in range(10):  # Wait up to 20 seconds
-            try:
-                response = client.get(f"{BASE_URL}/payment/{order_id}/link", headers=customer_headers)
-                response.raise_for_status()
-                payment_link = response.json().get("payment_link")
-                print(f"\n[ACTION] Open the link below in a browser and complete the payment:")
-                print(f"---------> {payment_link} <---------")
-                break
-            except httpx.HTTPStatusError as e:
-                if e.response.status_code != 404: raise e
-            time.sleep(2)
-
         if not payment_link:
-            print("\n[FAILURE] Could not retrieve payment link. Aborting.")
+            print("\n[FAILURE] Did not receive payment link in order response. Aborting.")
             return
 
+        print(f"\n[ACTION] Open the link below in a browser and complete the payment:")
+        print(f"---------> {payment_link} <---------")
+
+        # Step 3 - Wait for the order to be paid
         print("\n[INFO] Waiting for user to complete payment...")
         order_paid = False
         for i in range(24):
             response = client.get(f"{BASE_URL}/order/my", headers=customer_headers)
-            order_summary = next((o for o in response.json().get('orders', []) if o.get('order_id') == order_id), None)
+            # Find the correct order in the list of summaries
+            order_summary = None
+            if response.status_code == 200:
+                order_summary = next((o for o in response.json().get('orders', []) if o.get('order_id') == order_id),
+                                     None)
+
             if order_summary and order_summary.get('status') == 'paid':
                 print(f"\n[SUCCESS] Order {order_id} has been paid!")
                 order_paid = True
@@ -133,7 +126,7 @@ def run_kitchen_reject_demo():
             print("\n[FAILURE] Timeout waiting for payment. Aborting.")
             return
 
-        # --- PART 2: Kitchen staff rejects the order ---
+        # --- PART 2: Kitchen staff initiates a refund ---
 
         # Step 4 - Chef logs in
         print("\n[INFO] Logging in as chef...")
@@ -143,44 +136,47 @@ def run_kitchen_reject_demo():
         chef_headers = {"Authorization": f"Bearer {session_state['chef_token']}"}
         print("[SUCCESS] Chef token saved.")
 
-        # Step 5 - Chef rejects the order
-        print(f"\n[ACTION] Chef is rejecting paid order {order_id}...")
-        status_update_data = {"new_status": "failed"}
-        response = client.put(f"{BASE_URL}/staff/orders/{order_id}/status", headers=chef_headers,
-                              json=status_update_data)
+        # Step 5 - Chef orders a refund
+        print(f"\n[ACTION] Chef is initiating a REFUND for paid order {order_id}...")
+        refund_data = {"reason": "Item out of stock, refunding customer."}
+        response = client.post(f"{BASE_URL}/staff/orders/{order_id}/refund", headers=chef_headers,
+                               json=refund_data)
         response.raise_for_status()
-        print(
-            f"[SUCCESS] Cancellation requested for order {order_id}. Initiating compensation (refund, notifications).")
+        print(f"[SUCCESS] Refund requested for order {order_id}. The process will run asynchronously.")
 
         # --- PART 3: Final verification on the client's side ---
         print("\n[VERIFY] Client is verifying the final status of the order...")
         final_status_correct = False
-        for i in range(10):
+        for i in range(12):
             time.sleep(2)
             response = client.get(f"{BASE_URL}/order/my", headers=customer_headers)
             response.raise_for_status()
-            final_order = next((o for o in response.json().get('orders', []) if o.get('order_id') == order_id), None)
 
-            if final_order and final_order.get('status') == 'failed':
-                print(f"[PASS] Verification successful. Final status for order {order_id} is 'failed'.")
+            final_order = None
+            if response.status_code == 200:
+                final_order = next((o for o in response.json().get('orders', []) if o.get('order_id') == order_id),
+                                   None)
+
+            if final_order and final_order.get('status') == 'refunded':
+                print(f"[PASS] Verification successful. Final status for order {order_id} is 'refunded'.")
                 final_status_correct = True
                 break
             else:
                 current_status = final_order.get('status', 'unknown') if final_order else "not_found"
-                print(f"Attempt {i + 1}/10: Expected status 'failed', but current is '{current_status}'...")
+                print(f"Attempt {i + 1}/12: Expected status 'refunded', but current is '{current_token}'...")
 
         if not final_status_correct:
-            print(f"\n[FAIL] Verification failed. Order status was not changed to 'failed'.")
+            print(f"\n[FAIL] Verification failed. Order status was not changed to 'refunded'.")
         else:
-            print("\n[DEMO SUCCESS] The compensation flow for a kitchen rejection worked correctly.")
+            print("\n[DEMO SUCCESS] The compensation flow for a kitchen refund worked correctly.")
 
 
 if __name__ == "__main__":
     try:
-        run_kitchen_reject_demo()
+        run_kitchen_refund_demo()
     except httpx.HTTPStatusError as e:
         print(f"\n[ERROR] Server error: {e.response.status_code} - {e.response.text}")
     except httpx.RequestError as e:
         print(f"\n[ERROR] API communication error: {e}")
     except Exception as e:
-        print(f"\n[FATAL ERROR] An unexpected error occurred: {e}")
+        print(f"\n[FATAL ERROR] An unexpected error occurred: {e}", exc_info=True)
