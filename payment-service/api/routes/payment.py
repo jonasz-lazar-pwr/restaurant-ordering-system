@@ -2,14 +2,67 @@
 
 """Payment-related HTTP routes for managing PayU transactions."""
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Request
 
 from api.schemas.payment import CreateRefundRequest
 from api.services.payu import PayUClient
 from api.core.exceptions import PayUError, OrderError
+from api.workers.producer import publish_status_update
+from api.workers.consumer import extract_order_id_from_description
 
 router = APIRouter()
 payu_client = PayUClient()
+
+@router.post(
+    "/notify",
+    summary="Handle PayU payment notification",
+    status_code=status.HTTP_200_OK,
+    tags=["Payment"]
+)
+async def handle_payu_notification(request: Request):
+    """
+    Handles the webhook from PayU. If payment is complete, it publishes
+    a status update to the order, staff, and notification queues.
+    """
+    try:
+        notification_data = await request.json()
+        print(f"[PayU-Notify] Received notification: {notification_data}")
+
+        order_info = notification_data.get("order", {})
+        order_status = order_info.get("status")
+
+        if order_status == "COMPLETED":
+            description = order_info.get("description", "")
+            order_id_str = extract_order_id_from_description(description)
+
+            if order_id_str:
+                order_id = int(order_id_str)
+                await publish_status_update(order_id, "paid")
+            else:
+                print(f"[!] Could not extract order_id from notification: {description}")
+
+    except Exception as e:
+        print(f"[!] Error processing PayU notification: {e}")
+
+    return {"status": "ok"}
+
+@router.get(
+    "/{order_id}/link",
+    summary="Get payment link",
+    description="Returns the PayU payment link for a given internal order ID.",
+    response_model=dict,
+    tags=["Payment"]
+)
+def get_payment_link(order_id: str, request: Request):
+    """Retrieve the payment link from the in-memory store."""
+    payment_links_db = request.app.state.payment_links_db
+    link = payment_links_db.get(order_id)
+    if not link:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Payment link for order_id '{order_id}' not found."
+        )
+    return {"order_id": order_id, "payment_link": link}
 
 
 @router.get(

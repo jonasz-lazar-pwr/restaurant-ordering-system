@@ -24,7 +24,7 @@ from api.models import Order, OrderStatus
 from api.schemas.order import OrderStatusUpdate
 from api.utils.auth import extract_user_info
 from api.utils.permissions import validate_role_permission
-from api.workers.producer import send_order_status_notification
+from api.workers.producer import publish_status_update
 
 router = APIRouter()
 
@@ -82,7 +82,7 @@ async def update_order_status(
     await db.commit()
     await db.refresh(order)
 
-    await send_order_status_notification(order.id, order.status.value)
+    await publish_status_update(order.id, order.status.value)
 
     return {
         "message": f"Order status updated to '{order.status}'",

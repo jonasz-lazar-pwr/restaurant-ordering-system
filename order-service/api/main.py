@@ -8,17 +8,28 @@ on service startup, and includes all relevant routers and middleware.
 
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-
+import asyncio
 from api.core.middleware import add_middleware
 from api.routes.scan import router as scan_router
 from api.routes.order import router as order_router
+from api.workers.consumer import start_order_consumer
 
+consumer_task = None
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI):
-    print("Starting up Order Service...")
+async def lifespan(app: FastAPI):
+    """Handle startup and shutdown events."""
+    global consumer_task
+    print("Starting order-service...")
+    consumer_task = asyncio.create_task(start_order_consumer())
     yield
-    print("Shutting down Order Service...")
+    print("Shutting down order-service...")
+    if consumer_task:
+        consumer_task.cancel()
+        try:
+            await consumer_task
+        except asyncio.CancelledError:
+            print("Order consumer task cancelled.")
 
 
 app = FastAPI(

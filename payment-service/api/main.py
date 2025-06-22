@@ -19,6 +19,7 @@ from api.workers.consumer import start_payment_consumer
 
 consumer_task = None  # Background consumer task
 
+payment_links_db = {}
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
@@ -35,7 +36,7 @@ async def lifespan(_app: FastAPI):
     """
     global consumer_task
     print("Starting payment-service...")
-    consumer_task = asyncio.create_task(start_payment_consumer())
+    consumer_task = asyncio.create_task(start_payment_consumer(payment_links_db))
     yield
     print("Shutting down payment-service...")
     if consumer_task:
@@ -54,6 +55,9 @@ app = FastAPI(
     openapi_url="/openapi.json",
     lifespan=lifespan,
 )
+
+# Pass db to router
+app.state.payment_links_db = payment_links_db
 
 # Initialize PayU client
 payu_client = PayUClient()

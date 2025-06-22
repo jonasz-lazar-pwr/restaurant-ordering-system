@@ -1,17 +1,17 @@
 # === api/workers/producer.py ===
-
 import json
 import aio_pika
 from api.core.config import settings
 
 async def publish_status_update(order_id: int, status: str) -> None:
     """
-    Publishes a status update message to the order and notification queues.
+    Publishes a status update message to the order, staff, and notification queues.
     """
     connection = await aio_pika.connect_robust(settings.RABBITMQ_URL)
     async with connection.channel() as channel:
         queues_to_publish = [
             settings.ORDER_QUEUE,
+            settings.STAFF_QUEUE,
             settings.NOTIFICATION_QUEUE
         ]
 
@@ -24,4 +24,4 @@ async def publish_status_update(order_id: int, status: str) -> None:
         for queue_name in queues_to_publish:
             await channel.declare_queue(queue_name, durable=True)
             await channel.default_exchange.publish(message, routing_key=queue_name)
-            print(f" [StaffProducer] Sent status '{status}' for order {order_id} to queue '{queue_name}'")
+            print(f" [x] Sent status update for order {order_id}: '{status}' to queue '{queue_name}'")
