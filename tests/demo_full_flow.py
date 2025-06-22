@@ -124,38 +124,81 @@ def run_demo():
         return
 
     # Step 6 - Wait for Payment and Verify Status by Polling
-    print("\nNow, open the link above in a browser and complete the test payment.")
-    print("The script will now poll every 5 seconds to check if the order appears for the staff...")
+    print("\nNow, open the link above in a browser and complete the test payment (or cancel it).")
+    print("The script will now poll every 5 seconds to check the order status...")
 
-    order_visible_for_staff = False
+    final_status = None
+    for i in range(12):
+        print(f"Polling attempt {i + 1}/12...")
+        time.sleep(5)
+
+        headers = {"Authorization": f"Bearer {session_state['customer_token']}"}
+        response = httpx.get(f"{BASE_URL}/order/my", headers=headers)
+
+        if response.status_code == 200:
+            response_data = response.json()
+            order_summary = next(
+                (o for o in response_data.get('orders', []) if o.get('order_id') == session_state['order_id']), None)
+
+            if order_summary:
+                status = order_summary.get("status")
+                if status == 'paid':
+                    print(f"\n[SUCCESS] Order {session_state['order_id']} has been paid!")
+                    final_status = 'paid'
+                    break
+                elif status == 'cancelled':
+                    print(
+                        f"\n[COMPENSATION SUCCESS] Payment failed/cancelled, and order {session_state['order_id']} was correctly cancelled.")
+                    final_status = 'cancelled'
+                    break
+        elif response.status_code != 404:
+            response.raise_for_status()
+
+    if not final_status:
+        print("\n[FAILURE] Timeout: Order status did not change to 'paid' or 'cancelled' within 60 seconds.")
+        return
+
+    if final_status == 'cancelled':
+        return
+
+    # print("\nNow, open the link above in a browser and complete the test payment.")
+    # print("The script will now poll every 5 seconds to check if the order appears for the staff...")
+    #
+    # order_visible_for_staff = False
+    # with httpx.Client() as client:
+    #     chef_login_data = {"username": CHEF_DATA["email"], "password": CHEF_DATA["password"]}
+    #     response = client.post(f"{BASE_URL}/auth/jwt/login", data=chef_login_data)
+    #     response.raise_for_status()
+    #     session_state['chef_token'] = response.json()['access_token']
+    #     chef_headers = {"Authorization": f"Bearer {session_state['chef_token']}"}
+    #
+    #     for i in range(12):  # Max 60 seconds
+    #         print(f"Polling attempt {i + 1}/12...")
+    #         response = client.get(f"{BASE_URL}/staff/orders", headers=chef_headers)
+    #         response.raise_for_status()
+    #         staff_orders = response.json()
+    #
+    #         current_order = next((order for order in staff_orders if order['order_id'] == session_state['order_id']), None)
+    #
+    #         if current_order and current_order.get('status') == 'paid':
+    #             print(f"\n[SUCCESS] Order {session_state['order_id']} appeared in staff view with 'paid' status!")
+    #             order_visible_for_staff = True
+    #             break
+    #         time.sleep(5)
+    #
+    # if not order_visible_for_staff:
+    #     print("\n[FAILURE] Timeout: Order did not appear for staff within 60 seconds.")
+    #     return
+
     with httpx.Client() as client:
+        # Step X - Chef logging in
+        print("Chef logging in")
         chef_login_data = {"username": CHEF_DATA["email"], "password": CHEF_DATA["password"]}
         response = client.post(f"{BASE_URL}/auth/jwt/login", data=chef_login_data)
         response.raise_for_status()
         session_state['chef_token'] = response.json()['access_token']
         chef_headers = {"Authorization": f"Bearer {session_state['chef_token']}"}
-
-        for i in range(12):  # Max 60 seconds
-            print(f"Polling attempt {i + 1}/12...")
-            response = client.get(f"{BASE_URL}/staff/orders", headers=chef_headers)
-            response.raise_for_status()
-            staff_orders = response.json()
-
-            current_order = next((order for order in staff_orders if order['order_id'] == session_state['order_id']), None)
-
-            if current_order and current_order.get('status') == 'paid':
-                print(f"\n[SUCCESS] Order {session_state['order_id']} appeared in staff view with 'paid' status!")
-                order_visible_for_staff = True
-                break
-            time.sleep(5)
-
-    if not order_visible_for_staff:
-        print("\n[FAILURE] Timeout: Order did not appear for staff within 60 seconds.")
-        return
-
-    with httpx.Client() as client:
-        # Re-use tokens fetched earlier
-        chef_headers = {"Authorization": f"Bearer {session_state['chef_token']}"}
+        print("\n[INFO] Chef token saved to session state.")
 
         # Steps 7-8 - Chef
         print("Chef changing status to 'in_progress'")

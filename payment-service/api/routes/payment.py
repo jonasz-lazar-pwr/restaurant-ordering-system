@@ -24,22 +24,51 @@ async def handle_payu_notification(request: Request):
     Handles the webhook from PayU. If payment is complete, it publishes
     a status update to the order, staff, and notification queues.
     """
+    # try:
+    #     notification_data = await request.json()
+    #     print(f"[PayU-Notify] Received notification: {notification_data}")
+    #
+    #     order_info = notification_data.get("order", {})
+    #     order_status = order_info.get("status")
+    #
+    #     if order_status == "COMPLETED":
+    #         description = order_info.get("description", "")
+    #         order_id_str = extract_order_id_from_description(description)
+    #
+    #         if order_id_str:
+    #             order_id = int(order_id_str)
+    #             await publish_status_update(order_id, "paid")
+    #         else:
+    #             print(f"[!] Could not extract order_id from notification: {description}")
+    #
+    # except Exception as e:
+    #     print(f"[!] Error processing PayU notification: {e}")
     try:
         notification_data = await request.json()
         print(f"[PayU-Notify] Received notification: {notification_data}")
 
         order_info = notification_data.get("order", {})
         order_status = order_info.get("status")
+        description = order_info.get("description", "")
+        order_id_str = extract_order_id_from_description(description)
+
+        if not order_id_str:
+            print(f"[!] Could not extract order_id from notification: {description}")
+            return {"status": "ok"}
+
+        order_id = int(order_id_str)
 
         if order_status == "COMPLETED":
-            description = order_info.get("description", "")
-            order_id_str = extract_order_id_from_description(description)
+            print(f"[PayU-Notify] Payment COMPLETED for order {order_id}. Publishing 'paid' status.")
+            await publish_status_update(order_id, "paid")
 
-            if order_id_str:
-                order_id = int(order_id_str)
-                await publish_status_update(order_id, "paid")
-            else:
-                print(f"[!] Could not extract order_id from notification: {description}")
+        elif order_status in ["CANCELED", "REJECTED"]:
+            print(f"[PayU-Notify] Payment {order_status} for order {order_id}. Publishing 'cancelled' status.")
+            await publish_status_update(order_id, "cancelled")
+
+        else:
+            print(f"[PayU-Notify] Received unhandled status '{order_status}' for order {order_id}.")
+
 
     except Exception as e:
         print(f"[!] Error processing PayU notification: {e}")
