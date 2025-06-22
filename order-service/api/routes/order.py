@@ -107,8 +107,8 @@ async def order_item(
     ]
 
     db.add_all(order_items)
-    await db.commit()
-    await db.refresh(db_order)
+    # await db.commit()
+    # await db.refresh(db_order)
 
     try:
         await send_order_to_payment(
@@ -193,6 +193,7 @@ async def get_my_orders(
         for item in order.items:
             order_summaries.append(OrderSummary(
                 order_id=order.id,
+                status=order.status.value,
                 item_name=item.menu_item.name if item.menu_item else "Unknown",
                 quantity=item.quantity,
                 price=item.menu_item.price if item.menu_item else 0.0

@@ -35,6 +35,7 @@ class OrderResponse(BaseModel):
 class OrderSummary(BaseModel):
     """Summary of a single ordered item."""
     order_id: int = Field(..., description="ID of the order.")
+    status: str = Field(..., description="Status of the order.")
     item_name: str = Field(..., description="Name of the menu item.")
     quantity: int = Field(..., description="Ordered quantity.")
     price: float = Field(..., description="Unit price of the item.")

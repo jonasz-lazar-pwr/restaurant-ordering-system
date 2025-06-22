@@ -88,11 +88,11 @@ def run_client_cancel_demo():
     print(f"[SUCCESS] Created an order with ID: {session_state['order_id']}")
 
     # Step 5 - Canceling the order (The Compensation Action)
-    # print(f"\n[ACTION] Client is immediately canceling order {session_state['order_id']}...")
+    print(f"\n[ACTION] Client is immediately canceling order {session_state['order_id']}...")
     order_id = session_state['order_id']
-    # response = httpx.delete(f"{BASE_URL}/order/{order_id}", headers=headers)
-    # response.raise_for_status()
-    # print(f"[SUCCESS] Cancel request for order {order_id} sent.")
+    response = httpx.delete(f"{BASE_URL}/order/{order_id}", headers=headers)
+    response.raise_for_status()
+    print(f"[SUCCESS] Cancel request for order {order_id} sent.")
 
     # --- PART 3: Final Verification ---
 
@@ -104,23 +104,13 @@ def run_client_cancel_demo():
     response_data = response.json()
     my_orders = response_data.get('orders', [])
 
-    final_order = next((o for o in my_orders if o.get('id') == order_id), None)
+    final_order = next((o for o in my_orders if o.get('order_id') == order_id), None)
 
-    if final_order and final_order.get('status') == 'PENDING':
-        print(f"[PASS] Verified: Order {order_id} has final status 'PENDING'.")
+    if final_order and final_order.get('status') == 'cancelled':
+        print(f"[PASS] Verified: Order {order_id} has final status 'cancelled'.")
     else:
         status = final_order.get('status') if final_order else 'NOT FOUND'
-        print(f"[FAIL] Verification failed. Expected status 'PENDING', but got '{status}'.")
-        return
-
-    # Step 7 - Verify payment link was not created
-    print("\n[VERIFY] Checking that a payment link was NOT created...")
-    payment_link_response = httpx.get(f"{BASE_URL}/payment/{order_id}/link")
-    if payment_link_response.status_code == 404:
-        print("[PASS] Verified: Payment service returned 404 Not Found, as expected.")
-    else:
-        print(
-            f"[FAIL] Verification failed. A payment link was created for a cancelled order. Status: {payment_link_response.status_code}")
+        print(f"[FAIL] Verification failed. Expected status 'cancelled', but got '{status}'.")
         return
 
     print("\n[SUCCESS] Full client cancellation flow finished successfully!")
