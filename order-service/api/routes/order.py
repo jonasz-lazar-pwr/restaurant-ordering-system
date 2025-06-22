@@ -110,18 +110,21 @@ async def order_item(
     await db.commit()
     await db.refresh(db_order)
 
-    await send_order_to_payment(
-        order_id=db_order.id,
-        db=db,
-        buyer_info={
-            "email": user_info["email"],
-            "phone": settings.DEFAULT_PHONE_NUMBER,
-            "firstName": user_info.get("first_name"),
-            "lastName": user_info.get("last_name"),
-            "language": settings.DEFAULT_LANGUAGE
-        },
-        customer_ip=settings.DEFAULT_CUSTOMER_IP
-    )
+    try:
+        await send_order_to_payment(
+            order_id=db_order.id,
+            db=db,
+            buyer_info={
+                "email": user_info["email"],
+                "phone": settings.DEFAULT_PHONE_NUMBER,
+                "firstName": user_info.get("first_name"),
+                "lastName": user_info.get("last_name"),
+                "language": settings.DEFAULT_LANGUAGE
+            },
+            customer_ip=settings.DEFAULT_CUSTOMER_IP
+        )
+    except Exception as e:
+        print(f"--- [order_item] CRITICAL ERROR: Could not send order {db_order.id} to queue: {e}")
 
     return OrderResponse(
         message=f"Order placed successfully by {user_email} for table {table_number}.",
