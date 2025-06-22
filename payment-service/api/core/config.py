@@ -28,21 +28,10 @@ class Settings(BaseSettings):
     DB_PORT: str
     PAYMENT_SERVICE_DB_SCHEMA: str
 
-    # RabbitMQ
-    RABBITMQ_URL: str
-
     model_config = SettingsConfigDict(
         env_file = ".env",
         env_file_encoding = "utf-8",
         extra = "ignore"
     )
-
-    @property
-    def DATABASE_URL(self) -> str:
-        return (
-            f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}"
-            f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
-            f"?options=-csearch_path%3D{self.PAYMENT_SERVICE_DB_SCHEMA}"
-        )
 
 settings = Settings()

@@ -28,49 +28,101 @@ from api.models import Order, OrderItem
 from api.utils.payment_payload_builder import build_payment_payload
 
 
-async def send_order_to_payment(order_id: int, db: AsyncSession, buyer_info: dict, customer_ip: str) -> None:
-    """Send full payment payload to the payment service queue.
+import asyncio
+import uuid
+from aio_pika.abc import AbstractIncomingMessage
+
+
+async def publish_event(event_type: str, payload: dict, routing_key: str):
+    """
+    Publish a generic event message to RabbitMQ.
 
     Args:
-        order_id (int): ID of the order to be paid.
-        db (AsyncSession): SQLAlchemy async session.
-        buyer_info (dict): Info about the buyer (email, phone, etc.).
-        customer_ip (str): IP address of the customer placing the order.
+        event_type (str): A string indicating the type of event (e.g., "order_cancelled").
+        payload (dict): The data associated with the event.
+        routing_key (str): The RabbitMQ routing key for the message.
     """
-    # Load order and related items
-    order = await db.get(Order, order_id)
-    if not order:
-        return
-
-    result = await db.execute(
-        select(OrderItem)
-        .options(selectinload(OrderItem.menu_item))
-        .where(OrderItem.order_id == order_id)
-    )
-    order_items = result.scalars().all()
-
-    # Prepare menu item mapping
-    menu_items = {item.menu_item_id: item.menu_item for item in order_items}
-
-    # Build payment payload
-    payment_payload = build_payment_payload(
-        order=order,
-        order_items=order_items,
-        menu_items=menu_items,
-        buyer=buyer_info,
-        customer_ip=customer_ip,
-        notify_url=settings.PAYMENT_NOTIFY_URL
-    )
-
-    # Publish to payment_service_queue
     connection = await aio_pika.connect_robust(settings.RABBITMQ_URL)
     async with connection:
         channel = await connection.channel()
+        message_body = {
+            "event_type": event_type, # KLUCZ DO ROZRÓŻNIANIA WIADOMOŚCI
+            "payload": payload
+        }
 
         await channel.default_exchange.publish(
-            aio_pika.Message(body=json.dumps(payment_payload).encode()),
-            routing_key=settings.PAYMENT_QUEUE
+            aio_pika.Message(
+                body=json.dumps(message_body).encode(),
+                content_type="application/json",
+            ),
+            routing_key=routing_key
         )
+        print(f"[OrderService Producer] Published event '{event_type}' to '{routing_key}' with payload: {payload}")
+
+
+async def create_payment_request_and_wait_for_link(
+    payment_payload: dict
+) -> str: # Zwróci URL do płatności
+    connection = await aio_pika.connect_robust(settings.RABBITMQ_URL)
+    async with connection:
+        channel = await connection.channel()
+        # Stwórz tymczasową (ekskluzywną) kolejkę dla odpowiedzi
+        reply_queue = await channel.declare_queue(
+            exclusive=True, # Ekskluzywna, usunięta po rozłączeniu
+            auto_delete=True # Automatycznie usunięta, gdy nie ma konsumentów
+        )
+
+        correlation_id = str(uuid.uuid4())
+        loop = asyncio.get_running_loop()
+        future = loop.create_future()
+
+        # Funkcja callback do obsługi odpowiedzi
+        def on_response(message: AbstractIncomingMessage):
+            if message.correlation_id == correlation_id:
+                future.set_result(message.body.decode()) # Zakładamy, że body to URL
+
+        # Rozpocznij konsumowanie z kolejki zwrotnej
+        consumer_tag = await reply_queue.consume(on_response, no_ack=True) # no_ack=True bo tymczasowa, nie potrzebujemy potwierdzeń
+
+        try:
+            full_payload = {
+                "event_type": "create_payment_request", # <<< TUTAJ DEFINIUJEMY TYP DLA TWORZENIA PŁATNOŚCI
+                "payload": payment_payload
+            }
+
+            # Opublikuj wiadomość z danymi płatności
+            await channel.default_exchange.publish(
+                aio_pika.Message(
+                    body=json.dumps(full_payload).encode(),
+                    content_type="application/json",
+                    correlation_id=correlation_id,
+                    reply_to=reply_queue.name # Ustaw nazwę kolejki zwrotnej
+                ),
+                routing_key=settings.PAYMENT_QUEUE
+            )
+
+            # Poczekaj na odpowiedź (z timeoutem, aby uniknąć zawieszenia)
+            # Ustaw rozsądny timeout, np. 30 sekund
+            response_body = await asyncio.wait_for(future, timeout=30.0)
+
+            # Zakładamy, że odpowiedź to JSON z "redirect_uri"
+            response_data = json.loads(response_body)
+            redirect_uri = response_data.get("redirect_uri")
+
+            if not redirect_uri:
+                raise ValueError("Payment service did not return a redirect URI.")
+
+            return redirect_uri
+
+        except asyncio.TimeoutError:
+            raise TimeoutError("Payment service did not respond in time.")
+        except Exception as e:
+            # Logowanie błędów, np. walidacji odpowiedzi
+            print(f"Error in RPC call to payment service: {e}")
+            raise e
+        finally:
+            # Zakończ konsumowanie z kolejki zwrotnej
+            await reply_queue.cancel(consumer_tag)
 
 
 async def send_order_status_notification(order_id: int, new_status: str, email: str) -> None:

@@ -33,10 +33,105 @@ from api.core.config import settings
 from api.models import MenuItem, Order, OrderItem, OrderStatus, TableSession
 from api.schemas.order import OrderRequest, OrderResponse, OrderListResponse, OrderSummary, OrderDeletedOut
 from api.utils.auth import extract_user_info
-from api.workers.producer import send_order_to_payment, send_order_status_notification
+# from api.workers.producer import send_order_to_payment, send_order_status_notification
+from api.workers.producer import send_order_status_notification
+
+from api.utils.payment_payload_builder import build_payment_payload
+from api.workers.producer import create_payment_request_and_wait_for_link, publish_event
+import asyncio
 
 router = APIRouter()
 
+
+# @router.post(
+#     "",
+#     response_model=OrderResponse,
+#     summary="Place an order",
+#     description="Create a new order for a table with one or more menu items."
+# )
+# async def order_item(
+#     order_request: OrderRequest,
+#     db: AsyncSession = Depends(get_db),
+#     authorization: str = Header(...)
+# ) -> OrderResponse:
+#     """Create a new order based on the provided QR code and menu item IDs.
+
+#     Args:
+#         order_request (OrderRequest): Payload containing QR code, menu item IDs, quantities, comment, and payment method.
+#         db (AsyncSession): SQLAlchemy async session.
+#         authorization (str): JWT Bearer token.
+
+#     Returns:
+#         OrderResponse: Confirmation message and order ID.
+
+#     Raises:
+#         HTTPException: If any of the menu items do not exist.
+#     """
+#     user_info: Dict[str, Any] = extract_user_info(authorization)
+#     user_id = user_info["sub"]
+#     user_email = user_info.get("email")
+
+#     item_ids = [item.item_id for item in order_request.items]
+#     result = await db.execute(select(MenuItem).where(MenuItem.id.in_(item_ids)))
+#     menu_items = {item.id: item for item in result.scalars().all()}
+
+#     if len(menu_items) != len(item_ids):
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND,
+#             detail="One or more menu items not found."
+#         )
+
+#     # Find table number from TableSession
+#     session_result = await db.execute(
+#         select(TableSession).where(TableSession.user_id == user_id)
+#     )
+#     session = session_result.scalar_one_or_none()
+#     if not session:
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail="No active table session. Please scan QR code first."
+#         )
+#     table_number = session.table_number
+
+#     db_order = Order(
+#         table_number=table_number,
+#         user_id=user_id,
+#         comment=order_request.comment,
+#         payment_method=order_request.payment_method
+#     )
+
+#     db.add(db_order)
+#     await db.flush()  # Ensure order ID is available before adding items
+
+#     order_items = [
+#         OrderItem(
+#             order_id=db_order.id,
+#             menu_item_id=item.item_id,
+#             quantity=item.quantity
+#         ) for item in order_request.items
+#     ]
+
+#     db.add_all(order_items)
+#     await db.commit()
+#     await db.refresh(db_order)
+
+#     await send_order_to_payment(
+#         order_id=db_order.id,
+#         db=db,
+#         buyer_info={
+#             "email": user_info["email"],
+#             "phone": settings.DEFAULT_PHONE_NUMBER,
+#             "firstName": user_info.get("first_name"),
+#             "lastName": user_info.get("last_name"),
+#             "language": settings.DEFAULT_LANGUAGE
+#         },
+#         customer_ip=settings.DEFAULT_CUSTOMER_IP
+#     )
+
+#     return OrderResponse(
+#         message=f"Order placed successfully by {user_email} for table {table_number}.",
+#         order_id=db_order.id
+#     )
 
 @router.post(
     "",
@@ -47,7 +142,7 @@ router = APIRouter()
 async def order_item(
     order_request: OrderRequest,
     db: AsyncSession = Depends(get_db),
-    authorization: str = Header(...)
+    authorization: str = Header(...),
 ) -> OrderResponse:
     """Create a new order based on the provided QR code and menu item IDs.
 
@@ -57,10 +152,10 @@ async def order_item(
         authorization (str): JWT Bearer token.
 
     Returns:
-        OrderResponse: Confirmation message and order ID.
+        OrderResponse: Confirmation message and order ID, potentially with payment redirect URL.
 
     Raises:
-        HTTPException: If any of the menu items do not exist.
+        HTTPException: If any of the menu items do not exist, no active session, or payment fails/timeouts.
     """
     user_info: Dict[str, Any] = extract_user_info(authorization)
     user_id = user_info["sub"]
@@ -92,7 +187,7 @@ async def order_item(
         table_number=table_number,
         user_id=user_id,
         comment=order_request.comment,
-        payment_method=order_request.payment_method
+        payment_method=order_request.payment_method # Zakładamy, że to "online" dla płatności
     )
 
     db.add(db_order)
@@ -110,22 +205,62 @@ async def order_item(
     await db.commit()
     await db.refresh(db_order)
 
-    await send_order_to_payment(
-        order_id=db_order.id,
-        db=db,
-        buyer_info={
-            "email": user_info["email"],
-            "phone": settings.DEFAULT_PHONE_NUMBER,
-            "firstName": user_info.get("first_name"),
-            "lastName": user_info.get("last_name"),
-            "language": settings.DEFAULT_LANGUAGE
-        },
-        customer_ip=settings.DEFAULT_CUSTOMER_IP
-    )
+    # --- NOWA LOGIKA DLA SYNCHRONICZNEGO RPC PŁATNOŚCI ---
+    payment_redirect_uri = None # Domyślnie None
+    try:
+        # Pobierz IP klienta z żądania HTTP
+        customer_ip = settings.DEFAULT_CUSTOMER_IP
+
+        payment_payload = build_payment_payload(
+            order=db_order,
+            order_items=order_items,
+            menu_items=menu_items,
+            buyer={
+                "email": user_info["email"],
+                "phone": settings.DEFAULT_PHONE_NUMBER,
+                "firstName": user_info.get("first_name"),
+                "lastName": user_info.get("last_name"),
+                "language": settings.DEFAULT_LANGUAGE
+            },
+            customer_ip=customer_ip,
+            notify_url=settings.PAYMENT_NOTIFY_URL
+        )
+
+        # Wywołujemy funkcję RPC i czekamy na link
+        payment_redirect_uri = await create_payment_request_and_wait_for_link(payment_payload)
+
+        # Opcjonalnie: Zaktualizuj status zamówienia w bazie danych na "oczekuje na płatność"
+        # db_order.status = "PENDING_PAYMENT"
+        # await db.commit()
+
+        # Opcjonalnie: Wyślij asynchroniczne powiadomienie o nowym zamówieniu/statusie
+        await send_order_status_notification(
+            order_id=db_order.id,
+            new_status="PENDING_PAYMENT_REDIRECT",
+            email=user_email
+        )
+
+    except asyncio.TimeoutError:
+        # Płatność nie odpowiedziała w określonym czasie
+        print(f"Payment service timed out for order {db_order.id}")
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail="Payment initiation timed out. Please try again."
+        )
+    except Exception as e:
+        # Inne błędy podczas komunikacji RPC lub przetwarzania płatności
+        print(f"Error initiating payment for order {db_order.id}: {e}")
+        # Możesz tutaj obsłużyć bardziej szczegółowo: czy anulować zamówienie? Czy oznaczyć jako błąd?
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to initiate payment: {e}"
+        )
+    # --- KONIEC NOWEJ LOGIKI ---
 
     return OrderResponse(
-        message=f"Order placed successfully by {user_email} for table {table_number}.",
-        order_id=db_order.id
+        message=f"Order placed successfully for table {table_number}.",
+        order_id=db_order.id,
+        payment_redirect_uri=payment_redirect_uri
     )
 
 
@@ -248,6 +383,32 @@ async def cancel_order(
     order.status = OrderStatus.cancelled
     await db.commit()
     await db.refresh(order)
+
+    # Find table number from TableSession
+    session_result = await db.execute(
+        select(TableSession).where(TableSession.user_id == user_id)
+    )
+    session = session_result.scalar_one_or_none()
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No active table session. Please scan QR code first."
+        )
+    table_number = session.table_number
+
+    try:
+        await publish_event(
+            event_type="cancel_payment_request", # <<< TYP WIADOMOŚCI DLA ANULOWANIA
+            payload={
+                "order_service_order_id": order_id,
+                "table_number": str(table_number),
+                "user_id": str(user_id),
+                "reason": "Order cancelled by user in order-service"
+            },
+            routing_key=settings.PAYMENT_QUEUE # <<< TERAZ WYSYŁAMY DO TEJ SAMEJ KOLEJKI
+        )
+    except Exception as e:
+        print(f"[OrderService] Failed to publish payment cancellation message for order {order_id}: {e}")
 
     await send_order_status_notification(
         order_id=order.id,

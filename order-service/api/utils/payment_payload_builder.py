@@ -52,5 +52,7 @@ def build_payment_payload(
         "currencyCode": "PLN",
         "totalAmount": str(total_amount),
         "buyer": buyer,
-        "products": products
+        "products": products,
+        "tableNumber": str(order.table_number),
+        "userId": str(order.user_id)
     }
