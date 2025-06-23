@@ -70,19 +70,19 @@ model {
             apiGateway -> orderService "Przekierowuje żądania dot. zamówień" "HTTPS"
             apiGateway -> staffService "Przekierowuje żądania personelu" "HTTPS"
 
-            authService -> database "Czyta/Zapisuje dane użytkowników" "JDBC"
-            orderService -> database "Czyta/Zapisuje dane zamówień" "JDBC"
-            staffService -> database "Czyta/Zapisuje dane zamówień" "JDBC"
-            notificationService -> database "Zapisuje logi powiadomień" "JDBC"
+            authService -> database "Czyta/Zapisuje dane użytkowników" "SQL
+            orderService -> database "Czyta/Zapisuje dane zamówień" "SQL"
+            staffService -> database "Czyta/Zapisuje dane zamówień" "SQL"
+            notificationService -> database "Zapisuje logi powiadomień" "SQL"
 
-            orderService -> messageBus "Publikuje 'order_created'" "AMQP"
-            paymentService -> messageBus "Publikuje 'payment_status_changed'" "AMQP"
-            staffService -> messageBus "Publikuje 'staff_status_changed'" "AMQP"
+            orderService -> messageBus "Publikuje 'order_created'" "RabbitMQ"
+            paymentService -> messageBus "Publikuje 'payment_status_changed'" "RabbitMQ"
+            staffService -> messageBus "Publikuje 'staff_status_changed'" "RabbitMQ"
 
-            messageBus -> paymentService "Dostarcza 'order_created'" "AMQP"
-            messageBus -> orderService "Dostarcza zdarzenia o zmianie statusu" "AMQP"
-            messageBus -> staffService "Dostarcza zdarzenia o zmianie statusu" "AMQP"
-            messageBus -> notificationService "Dostarcza wszystkie zdarzenia" "AMQP"
+            messageBus -> paymentService "Dostarcza 'order_created'" "RabbitMQ"
+            messageBus -> orderService "Dostarcza zdarzenia o zmianie statusu" "RabbitMQ"
+            messageBus -> staffService "Dostarcza zdarzenia o zmianie statusu" "RabbitMQ"
+            messageBus -> notificationService "Dostarcza wszystkie zdarzenia" "RabbitMQ"
         }
     }
 
