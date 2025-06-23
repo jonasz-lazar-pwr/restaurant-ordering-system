@@ -107,7 +107,7 @@ def run_demo():
     # Step 4a - Polling for the payment link
     print("\n4a. Polling for the payment link (it will be populated asynchronously)...")
     payment_link = None
-    for i in range(15):  # Poll for up to 30 seconds
+    for i in range(15):
         print(f"   Polling attempt {i + 1}/15...")
         time.sleep(2)
         response = httpx.get(f"{BASE_URL}/order/my", headers=headers)
@@ -117,7 +117,7 @@ def run_demo():
             if order_summary and order_summary.get("payment_link"):
                 payment_link = order_summary["payment_link"]
                 break
-        elif response.status_code != 404: # Ignore 404 if order not found yet
+        elif response.status_code != 404:
             response.raise_for_status()
 
     if not payment_link:

@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     DEFAULT_PHONE_NUMBER: str
     DEFAULT_LANGUAGE: str
     DEFAULT_CUSTOMER_IP: str
+    DEFAULT_NOTIFICATION_EMAIL: str
 
     CORS_ALLOW_ORIGINS: str
 

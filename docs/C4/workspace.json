@@ -4,7 +4,7 @@
   "documentation" : { },
   "id" : 1,
   "lastModifiedAgent" : "structurizr-ui",
-  "lastModifiedDate" : "2025-06-23T00:18:16Z",
+  "lastModifiedDate" : "2025-06-23T07:24:09Z",
   "model" : {
     "people" : [ {
       "description" : "Osoba składająca zamówienie w restauracji.",
@@ -614,7 +614,7 @@
   "views" : {
     "componentViews" : [ {
       "automaticLayout" : {
-        "applied" : true,
+        "applied" : false,
         "edgeSeparation" : 0,
         "implementation" : "Graphviz",
         "nodeSeparation" : 300,
@@ -624,26 +624,22 @@
       },
       "containerId" : "5",
       "description" : "Diagram Komponentów dla Auth Service.",
-      "dimensions" : {
-        "height" : 1411,
-        "width" : 2390
-      },
       "elements" : [ {
         "id" : "6",
-        "x" : 220,
-        "y" : 472
+        "x" : 0,
+        "y" : 0
       }, {
         "id" : "7",
-        "x" : 970,
-        "y" : 472
+        "x" : 0,
+        "y" : 0
       }, {
         "id" : "8",
-        "x" : 1720,
-        "y" : 772
+        "x" : 0,
+        "y" : 0
       }, {
         "id" : "9",
-        "x" : 1720,
-        "y" : 172
+        "x" : 0,
+        "y" : 0
       } ],
       "externalContainerBoundariesVisible" : false,
       "key" : "AuthServiceComponents",
@@ -869,36 +865,36 @@
       },
       "elements" : [ {
         "id" : "4",
-        "x" : 219,
-        "y" : 1387
+        "x" : 220,
+        "y" : 1388
       }, {
         "id" : "5",
-        "x" : 1719,
-        "y" : 171
+        "x" : 1720,
+        "y" : 172
       }, {
         "id" : "13",
-        "x" : 969,
-        "y" : 1387
+        "x" : 970,
+        "y" : 1388
       }, {
         "id" : "21",
-        "x" : 2469,
-        "y" : 1387
+        "x" : 2470,
+        "y" : 1388
       }, {
         "id" : "28",
-        "x" : 2469,
-        "y" : 1987
+        "x" : 2470,
+        "y" : 1988
       }, {
         "id" : "38",
-        "x" : 2469,
-        "y" : 787
+        "x" : 2470,
+        "y" : 788
       }, {
         "id" : "44",
-        "x" : 1719,
-        "y" : 1387
+        "x" : 1720,
+        "y" : 1388
       }, {
         "id" : "45",
-        "x" : 3219,
-        "y" : 562
+        "x" : 3220,
+        "y" : 563
       } ],
       "externalSoftwareSystemBoundariesVisible" : false,
       "key" : "Containers",
@@ -910,67 +906,67 @@
       }, {
         "id" : "48",
         "vertices" : [ {
-          "x" : 969,
-          "y" : 1837
+          "x" : 970,
+          "y" : 1838
         } ]
       }, {
         "id" : "49",
         "vertices" : [ {
-          "x" : 2919,
-          "y" : 404
+          "x" : 2920,
+          "y" : 405
         } ]
       }, {
         "id" : "50",
         "vertices" : [ {
-          "x" : 2469,
-          "y" : 637
+          "x" : 2470,
+          "y" : 638
         }, {
-          "x" : 2919,
-          "y" : 637
+          "x" : 2920,
+          "y" : 638
         } ]
       }, {
         "id" : "51",
         "vertices" : [ {
-          "x" : 2919,
-          "y" : 1837
+          "x" : 2920,
+          "y" : 1838
         } ]
       }, {
         "id" : "52"
       }, {
         "id" : "53",
         "vertices" : [ {
-          "x" : 1569,
-          "y" : 1687
+          "x" : 1570,
+          "y" : 1688
         } ]
       }, {
         "id" : "54",
         "vertices" : [ {
-          "x" : 2319,
-          "y" : 1387
+          "x" : 2320,
+          "y" : 1388
         } ]
       }, {
         "id" : "55",
         "vertices" : [ {
-          "x" : 2412,
-          "y" : 1719
+          "x" : 2413,
+          "y" : 1720
         } ]
       }, {
         "id" : "56",
         "vertices" : [ {
-          "x" : 2319,
-          "y" : 1687
+          "x" : 2320,
+          "y" : 1688
         } ]
       }, {
         "id" : "57",
         "vertices" : [ {
-          "x" : 1569,
-          "y" : 1387
+          "x" : 1570,
+          "y" : 1388
         } ]
       }, {
         "id" : "58",
         "vertices" : [ {
-          "x" : 2225,
-          "y" : 1954
+          "x" : 2226,
+          "y" : 1955
         } ]
       }, {
         "id" : "59"
@@ -995,19 +991,19 @@
       "elements" : [ {
         "id" : "3",
         "x" : 950,
-        "y" : 452
+        "y" : 451
       }, {
         "id" : "60",
         "x" : 200,
-        "y" : 452
+        "y" : 451
       }, {
         "id" : "61",
         "x" : 1700,
-        "y" : 152
+        "y" : 151
       }, {
         "id" : "62",
         "x" : 1700,
-        "y" : 752
+        "y" : 751
       } ],
       "enterpriseBoundaryVisible" : true,
       "key" : "SystemContext",
@@ -1018,13 +1014,13 @@
         "id" : "66",
         "vertices" : [ {
           "x" : 1605,
-          "y" : 591
+          "y" : 590
         } ]
       }, {
         "id" : "67",
         "vertices" : [ {
           "x" : 1494,
-          "y" : 312
+          "y" : 311
         } ]
       }, {
         "id" : "68"

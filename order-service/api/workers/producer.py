@@ -22,8 +22,7 @@ async def send_order_status_notification(order_id: int, new_status: str, email: 
 
         payload = json.dumps({
             "order_id": order_id,
-            "new_status": new_status,
-            "email": email
+            "status": new_status
         }).encode()
 
         await channel.default_exchange.publish(
