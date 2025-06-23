@@ -92,12 +92,27 @@ def run_kitchen_refund_demo():
 
         response_data = response.json()
         session_state['order_id'] = response_data['order_id']
-        payment_link = response_data.get('payment_link')
         order_id = session_state['order_id']
         print(f"[SUCCESS] Created an order with ID: {order_id}")
 
+        # Step 2a - Poll for the payment link asynchronously
+        print("\n[INFO] Polling for the payment link (it will be populated asynchronously)...")
+        payment_link = None
+        for i in range(15):  # Poll for up to 30 seconds
+            print(f"   Polling attempt {i + 1}/15...")
+            time.sleep(2)
+            response = client.get(f"{BASE_URL}/order/my", headers=customer_headers)
+            if response.status_code == 200:
+                orders_summary = response.json().get('orders', [])
+                current_order = next((o for o in orders_summary if o.get('order_id') == order_id), None)
+                if current_order and current_order.get('payment_link'):
+                    payment_link = current_order['payment_link']
+                    break
+            elif response.status_code != 404:
+                response.raise_for_status()
+
         if not payment_link:
-            print("\n[FAILURE] Did not receive payment link in order response. Aborting.")
+            print("\n[FAILURE] Did not receive payment link after polling. Aborting.")
             return
 
         print(f"\n[ACTION] Open the link below in a browser and complete the payment:")
@@ -108,7 +123,6 @@ def run_kitchen_refund_demo():
         order_paid = False
         for i in range(24):
             response = client.get(f"{BASE_URL}/order/my", headers=customer_headers)
-            # Find the correct order in the list of summaries
             order_summary = None
             if response.status_code == 200:
                 order_summary = next((o for o in response.json().get('orders', []) if o.get('order_id') == order_id),
@@ -163,7 +177,7 @@ def run_kitchen_refund_demo():
                 break
             else:
                 current_status = final_order.get('status', 'unknown') if final_order else "not_found"
-                print(f"Attempt {i + 1}/12: Expected status 'refunded', but current is '{current_token}'...")
+                print(f"Attempt {i + 1}/12: Expected status 'refunded', but current is '{current_status}'...")
 
         if not final_status_correct:
             print(f"\n[FAIL] Verification failed. Order status was not changed to 'refunded'.")

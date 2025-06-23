@@ -3,7 +3,6 @@
 """
 Order endpoints for the Order Service.
 """
-import httpx
 from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException, status, Header
@@ -16,7 +15,7 @@ from api.core.config import settings
 from api.models import MenuItem, Order, OrderItem, OrderStatus, TableSession
 from api.schemas.order import OrderRequest, OrderResponse, OrderListResponse, OrderSummary, OrderDeletedOut, PaymentMethod
 from api.utils.auth import extract_user_info
-from api.workers.producer import send_order_status_notification
+from api.workers.producer import send_order_status_notification, send_payment_request
 from api.utils.payment_payload_builder import build_payment_payload
 
 router = APIRouter()
@@ -25,15 +24,15 @@ router = APIRouter()
     "",
     response_model=OrderResponse,
     summary="Place an order",
-    description="Create a new order. If payment method is 'online', it will synchronously call the payment service to get a payment link."
+    description="Creates a new order. If payment is online, a request is sent to the payment service asynchronously."
 )
 async def create_order(
     order_request: OrderRequest,
     db: AsyncSession = Depends(get_db),
     authorization: str = Header(...)
 ) -> OrderResponse:
-    """Create a new order. For online payments, it synchronously contacts the
-    Payment Service to generate and return a payment link.
+    """Create a new order. For online payments, it asynchronously sends a request
+    to the Payment Service to generate a payment link.
     """
     user_info: Dict[str, Any] = extract_user_info(authorization)
     user_id = user_info["sub"]
@@ -82,8 +81,7 @@ async def create_order(
     await db.commit()
     await db.refresh(db_order)
 
-    payment_link = None
-    # --- 4. Handle Payment ---
+    # --- 4. Handle Payment Asynchronously ---
     if order_request.payment_method == PaymentMethod.online:
         payment_payload = build_payment_payload(
             order=db_order,
@@ -99,35 +97,11 @@ async def create_order(
             customer_ip=settings.DEFAULT_CUSTOMER_IP,
             notify_url=settings.PAYMENT_NOTIFY_URL
         )
-
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{settings.PAYMENT_SERVICE_URL}/payment",
-                    json=payment_payload
-                )
-                response.raise_for_status()
-                payment_link = response.json().get("payment_link")
-        except httpx.HTTPStatusError as e:
-            # If payment service fails, we should ideally compensate (e.g., mark order as failed).
-            db_order.status = OrderStatus.failed
-            await db.commit()
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=f"Payment service failed: {e.response.text}"
-            )
-        except Exception as e:
-            db_order.status = OrderStatus.failed
-            await db.commit()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"An unexpected error occurred while contacting payment service: {str(e)}"
-            )
+        await send_payment_request(payment_payload)
 
     return OrderResponse(
-        message=f"Order placed successfully by {user_info.get('email')} for table {session.table_number}.",
-        order_id=db_order.id,
-        payment_link=payment_link
+        message=f"Order has been received and is being processed.",
+        order_id=db_order.id
     )
 
 
@@ -183,7 +157,8 @@ async def get_my_orders(
                 status=order.status.value,
                 item_name=item.menu_item.name if item.menu_item else "Unknown",
                 quantity=item.quantity,
-                price=item.menu_item.price if item.menu_item else 0.0
+                price=item.menu_item.price if item.menu_item else 0.0,
+                payment_link=order.payment_link
             ))
 
     return OrderListResponse(

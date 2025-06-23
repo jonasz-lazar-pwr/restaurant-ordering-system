@@ -1,4 +1,5 @@
-# Plik: payment-service/api/workers/consumer.py
+# === payment-service/api/workers/consumer.py ===
+
 
 import json
 import re
@@ -13,6 +14,7 @@ from api.services.payu import PayUClient
 # Importy do obsługi bazy danych
 from api.db.session import async_session
 from api.models.payment import Payment
+from api.workers.producer import publish_payment_link_update
 
 payu_client = PayUClient()
 
@@ -54,17 +56,24 @@ async def handle_payment_message(payload: dict) -> None:
     if redirect_uri and payu_order_id:
         order_id_str = extract_order_id_from_description(payment.description)
         if order_id_str:
+            internal_order_id = int(order_id_str)
             async with async_session() as session:
                 async with session.begin():
                     new_payment = Payment(
-                        order_id=int(order_id_str),
+                        order_id=internal_order_id,
                         payu_order_id=payu_order_id,
                         payment_link=redirect_uri,
                         status="PENDING"
                     )
                     session.add(new_payment)
                     await session.commit()
-                print(f"[PaymentConsumer] Saved payment details for order_id: {order_id_str} to the database.")
+                print(f"[PaymentConsumer] Saved payment details for order_id: {internal_order_id} to the database.")
+
+            # Publish the payment link back to the order service
+            await publish_payment_link_update(
+                order_id=internal_order_id,
+                payment_link=redirect_uri
+            )
         else:
             print(f"[!] Could not extract order_id from description: {payment.description}")
 

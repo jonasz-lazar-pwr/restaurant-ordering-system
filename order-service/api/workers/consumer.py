@@ -10,28 +10,39 @@ from api.db.session import async_session
 from api.models.order import Order
 from api.core.config import settings
 
-async def handle_status_update(payload: dict):
+async def handle_message(payload: dict):
     """
-    Handles a single order status update message asynchronously.
+    Handles an incoming message, dispatching to the correct logic
+    based on the payload content (status update or payment link update).
     """
     async with async_session() as db:
         try:
             order_id = payload.get("order_id")
-            new_status = payload.get("status")
-
-            if not order_id or not new_status:
-                print(f"[!] Invalid payload received: {payload}")
+            if not order_id:
+                print(f"[!] Invalid payload received (missing order_id): {payload}")
                 return
 
             result = await db.execute(select(Order).filter(Order.id == order_id))
             order = result.scalar_one_or_none()
 
-            if order:
+            if not order:
+                print(f"[!] Order with id {order_id} not found.")
+                return
+
+            # Dispatch based on payload keys
+            if "status" in payload:
+                new_status = payload["status"]
                 print(f"[OrderConsumer] Updating order {order_id} status to '{new_status}'")
                 order.status = new_status
-                await db.commit()
+            elif "payment_link" in payload:
+                payment_link = payload["payment_link"]
+                print(f"[OrderConsumer] Updating order {order_id} with payment link.")
+                order.payment_link = payment_link
             else:
-                print(f"[!] Order with id {order_id} not found.")
+                print(f"[!] Unrecognized payload format: {payload}")
+                return
+
+            await db.commit()
 
         except Exception as e:
             print(f"Error during DB operation in order-service: {e}")
@@ -51,6 +62,6 @@ async def start_order_consumer() -> None:
         async with message.process():
             try:
                 payload = json.loads(message.body.decode("utf-8"))
-                await handle_status_update(payload)
+                await handle_message(payload)
             except Exception as e:
                 print(f"[!] Failed to process message from order queue: {e}")

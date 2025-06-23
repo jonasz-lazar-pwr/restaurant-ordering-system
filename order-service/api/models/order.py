@@ -23,6 +23,7 @@ class Order(Base):
         user_id (str): ID of the user who placed the order.
         status (OrderStatus): Current status of the order (e.g., pending, paid).
         payment_method (PaymentMethod): Selected method of payment (cash or online).
+        payment_link (str): URL for online payment, populated asynchronously.
         comment (str): Optional comment or notes added by the customer.
         created_at (datetime): Timestamp of when the order was created.
         items (List[OrderItem]): List of ordered items in this order.
@@ -35,6 +36,7 @@ class Order(Base):
     user_id = Column(String, index=True, nullable=False)
     status = Column(SQLEnum(OrderStatus), default=OrderStatus.pending, nullable=False)
     payment_method = Column(SQLEnum(PaymentMethod), nullable=False)
+    payment_link = Column(String, nullable=True)
     comment = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 

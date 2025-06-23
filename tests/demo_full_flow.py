@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
 
     class Config:
+        # Adjust the path to be relative to this script's location
         env_file = os.path.join(os.path.dirname(__file__), '..', 'config', '.env')
         env_file_encoding = 'utf-8'
         extra = 'ignore'
@@ -91,7 +92,7 @@ def run_demo():
     response.raise_for_status()
     print("[SUCCESS] QR code scanned and table assigned.")
 
-    # Step 4 - Placing an order and getting payment link
+    # Step 4 - Placing an order
     print("\n4. Client placing an order...")
     order_data = {
         "items": [{"item_id": 1, "quantity": 1}, {"item_id": 2, "quantity": 1}],
@@ -101,14 +102,29 @@ def run_demo():
     response.raise_for_status()
     order_response_data = response.json()
     session_state['order_id'] = order_response_data['order_id']
-    payment_link = order_response_data.get('payment_link')
     print(f"[SUCCESS] Created an order with ID: {session_state['order_id']}")
 
+    # Step 4a - Polling for the payment link
+    print("\n4a. Polling for the payment link (it will be populated asynchronously)...")
+    payment_link = None
+    for i in range(15):  # Poll for up to 30 seconds
+        print(f"   Polling attempt {i + 1}/15...")
+        time.sleep(2)
+        response = httpx.get(f"{BASE_URL}/order/my", headers=headers)
+        if response.status_code == 200:
+            order_summary = next(
+                (o for o in response.json().get('orders', []) if o.get('order_id') == session_state['order_id']), None)
+            if order_summary and order_summary.get("payment_link"):
+                payment_link = order_summary["payment_link"]
+                break
+        elif response.status_code != 404: # Ignore 404 if order not found yet
+            response.raise_for_status()
+
     if not payment_link:
-        print("\n[FATAL] Payment link not received in order response. Aborting.")
+        print("\n[FATAL] Payment link not received after polling. The async process may have failed. Aborting.")
         return
 
-    print(f"\n[SUCCESS] Got PayU payment link:")
+    print(f"\n[SUCCESS] Got PayU payment link via polling:")
     print(f"---------> {payment_link} <---------")
 
     # PART 2 - System and staff
