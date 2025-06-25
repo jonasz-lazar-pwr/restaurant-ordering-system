@@ -2,7 +2,7 @@
 
 """Schemas for order creation and retrieval."""
 
-from typing import List
+from typing import List, Optional
 from enum import Enum
 from pydantic import BaseModel, Field
 
@@ -33,7 +33,7 @@ class OrderRequest(BaseModel):
 
 class OrderResponse(BaseModel):
     """Response after placing a new order."""
-    message: str = Field(..., description="Success message including table number and email.")
+    message: str = Field(..., description="Confirmation that the order has been received.")
     order_id: int = Field(..., description="ID of the newly created order.")
     payment_redirect_uri: str | None = Field(None, description="URL to redirect the user for payment, if applicable.")
 
@@ -41,9 +41,11 @@ class OrderResponse(BaseModel):
 class OrderSummary(BaseModel):
     """Summary of a single ordered item."""
     order_id: int = Field(..., description="ID of the order.")
+    status: str = Field(..., description="Status of the order.")
     item_name: str = Field(..., description="Name of the menu item.")
     quantity: int = Field(..., description="Ordered quantity.")
     price: float = Field(..., description="Unit price of the item.")
+    payment_link: Optional[str] = Field(None, description="URL for online payment, if available.")
 
 
 class OrderListResponse(BaseModel):

@@ -1,114 +1,100 @@
 // model.dsl
 
 model {
-    // Użytkownik systemu
-    user = person "Użytkownik" "Przegląda menu, składa i opłaca zamówienia, obsługuje płatności, przyjmuje zamówienia i zarządza systemem"
+    group "Restauracja XYZ" {
+        client = person "Klient" "Osoba składająca zamówienie w restauracji." "Person"
+        staff = person "Personel Restauracji" "Kucharz/Kelner zarządzający zamówieniami." "Person"
 
-    // Zewnętrzne systemy
-    sms_gateway = softwareSystem "Usługa SMS" "Wysyła powiadomienia do klientów"
-    email_gateway = softwareSystem "Usługa e-mail" "Wysyła rachunki elektroniczne do klientów"
-    payment_gateway = softwareSystem "Bramka płatności online" "Obsługuje płatności BLIK, PayU, itp."
+        orderingSystem = softwareSystem "System Zamówień w Restauracji" "Główny system do obsługi zamówień." "SoftwareSystemInternal" {
 
-    // Główny system
-    system = softwareSystem "System Zamówień w Restauracji" "Pozwala klientom zamawiać dania, a obsłudze je realizować" {
+            apiGateway = container "API Gateway" "Pojedynczy punkt wejścia do systemu." "Kong" "Gateway"
 
-        // --- Kontenery Aplikacyjne ---
-        gateway = container "API Gateway" "Routing żądań do mikroserwisów, uwierzytelnianie, autoryzacja" "Kong"
+            authService = container "Auth Service" "Serwis do zarządzania użytkownikami i uwierzytelnianiem." "Python/FastAPI" "Microservice" {
+                authApi = component "Auth Router" "Obsługuje żądania API dla /auth, /register itd." "FastAPI Router" "Component"
+                authUserManager = component "User Manager" "Logika biznesowa do zarządzania użytkownikami." "FastAPI-Users Logic" "Component"
+                authDbAdapter = component "User DB Adapter" "Abstrakcja dostępu do bazy danych użytkowników." "FastAPI-Users SQLAlchemy" "Component"
+                authJwtStrategy = component "JWT Strategy" "Tworzy i waliduje tokeny JWT." "FastAPI-Users JWT" "Component"
 
-        // --- Kontener Auth Service z Komponentami (Poziom 3) ---
-        auth = container "Auth Service" "Uwierzytelnianie, logowanie, role" "FastAPI" {
-            // Komponenty wewnętrzne Auth Service - Na podstawie kodu FastAPI
-            routers = component "FastAPI Users Routers" "Obsługuje żądania HTTP dla /auth/* i /users/* używając fastapi-users" "FastAPI Users" {
-                tags "Component"
-            }
-            authBackend = component "Authentication Backend" "Koordynuje proces uwierzytelniania JWT" "FastAPI Users" {
-                tags "Component"
-            }
-            jwtStrategy = component "Custom JWT Strategy" "Generuje i waliduje tokeny JWT z rolą użytkownika" "Python / python-jose" {
-                tags "Component"
-            }
-            userManager = component "User Manager" "Zarządza logiką tworzenia, aktualizacji i pobierania użytkowników" "FastAPI Users / Python" {
-                tags "Component"
-            }
-            dbAdapter = component "SQLAlchemy User DB Adapter" "Adapter mapujący operacje User Managera na zapytania SQLAlchemy" "FastAPI Users / SQLAlchemy" {
-                tags "Component"
+                authApi -> authUserManager "Deleguje logikę uwierzytelniania"
+                authUserManager -> authDbAdapter "Zarządza encjami użytkowników"
+                authUserManager -> authJwtStrategy "Tworzy tokeny JWT"
             }
 
-            // Relacje wewnętrzne między komponentami Auth Service
-            routers -> userManager "Używa do rejestracji, pobierania/zarządzania użytkownikami" "FastAPI dependency injection"
-            routers -> authBackend "Używa do logowania, weryfikacji tokenów" "FastAPI dependency injection"
-            authBackend -> jwtStrategy "Deleguje tworzenie/odczyt tokenu" "Python call"
-            userManager -> dbAdapter "Deleguje operacje bazodanowe na użytkownikach" "Python call"
+            orderService = container "Order Service" "Serwis do tworzenia i zarządzania zamówieniami przez klienta." "Python/FastAPI" "Microservice" {
+                orderApi = component "Order Controller" "Obsługuje przychodzące żądania HTTP API." "FastAPI Router" "Component"
+                orderRepository = component "Order Repository" "Zarządza logiką dostępu do danych zamówień." "SQLAlchemy" "Component"
+                orderProducer = component "RabbitMQ Producer" "Publikuje zdarzenia dotyczące zamówień." "aio-pika" "Component"
+                orderConsumer = component "RabbitMQ Consumer" "Nasłuchuje na zdarzenia dotyczące zmian statusu." "aio-pika" "Component"
 
-            // Relacja komponentu DB Adapter do kontenera bazy danych
-            // dbAdapter -> db_auth "Wykonuje operacje CRUD na tabeli 'users'" "SQLAlchemy / TCP"
+                orderApi -> orderRepository "Używa do operacji na bazie danych"
+                orderApi -> orderProducer "Wysyła wiadomość po utworzeniu zamówienia"
+                orderConsumer -> orderRepository "Aktualizuje status zamówienia w bazie danych"
+            }
+
+            paymentService = container "Payment Service" "Serwis do obsługi płatności przez PayU." "Python/FastAPI" "Microservice" {
+                paymentApi = component "PayU Webhook Controller" "Odbiera powiadomienia o statusie płatności." "FastAPI Router" "Component"
+                paymentPayuClient = component "PayU Client" "Klient do komunikacji z zewnętrznym API PayU." "HTTP Client" "Component"
+                paymentConsumer = component "RabbitMQ Consumer" "Nasłuchuje na zdarzenia utworzenia zamówienia." "aio-pika" "Component"
+                paymentProducer = component "RabbitMQ Producer" "Publikuje zdarzenia o statusie płatności." "aio-pika" "Component"
+
+                paymentConsumer -> paymentPayuClient "Inicjuje płatność"
+                paymentApi -> paymentProducer "Deleguje publikację zdarzenia"
+            }
+
+            staffService = container "Staff Service" "Serwis do zarządzania zamówieniami przez personel." "Python/FastAPI" "Microservice" {
+                staffApi = component "Staff Order Controller" "Obsługuje żądania API personelu." "FastAPI Router" "Component"
+                staffRepository = component "Order Repository" "Zarządza logiką dostępu do danych zamówień." "SQLAlchemy" "Component"
+                staffPermissions = component "Permission Validator" "Sprawdza uprawnienia personelu." "Custom Logic" "Component"
+                staffProducer = component "RabbitMQ Producer" "Publikuje zdarzenia po zmianie statusu." "aio-pika" "Component"
+                staffConsumer = component "RabbitMQ Consumer" "Nasłuchuje na zdarzenia." "aio-pika" "Component"
+
+                staffApi -> staffPermissions "Sprawdza uprawnienia"
+                staffApi -> staffRepository "Pobiera/Aktualizuje dane zamówień"
+                staffApi -> staffProducer "Wysyła zdarzenie o zmianie statusu"
+                staffConsumer -> staffRepository "Aktualizuje lokalną kopię danych"
+            }
+
+            notificationService = container "Notification Service" "Serwis do wysyłania powiadomień." "Python/FastAPI" "Microservice" {
+                notificationConsumer = component "RabbitMQ Consumer" "Odbiera wszystkie zdarzenia." "aio-pika" "Component"
+                notificationSnsClient = component "SNS Client" "Klient do wysyłania powiadomień przez AWS SNS." "boto3" "Component"
+                notificationRepository = component "Notification Repository" "Zapisuje historię wysłanych powiadomień." "SQLAlchemy" "Component"
+
+                notificationConsumer -> notificationSnsClient "Deleguje wysyłkę powiadomienia"
+                notificationConsumer -> notificationRepository "Zapisuje log wysyłki"
+            }
+
+            messageBus = container "Broker Wiadomości" "Asynchroniczna komunikacja." "RabbitMQ" "MessageBus"
+            database = container "Baza Danych" "Przechowuje dane w odizolowanych schematach." "PostgreSQL" "Database"
+
+            apiGateway -> authService "Przekierowuje żądania uwierzytelniania" "HTTPS"
+            apiGateway -> orderService "Przekierowuje żądania dot. zamówień" "HTTPS"
+            apiGateway -> staffService "Przekierowuje żądania personelu" "HTTPS"
+
+            authService -> database "Czyta/Zapisuje dane użytkowników" "SQL
+            orderService -> database "Czyta/Zapisuje dane zamówień" "SQL"
+            staffService -> database "Czyta/Zapisuje dane zamówień" "SQL"
+            notificationService -> database "Zapisuje logi powiadomień" "SQL"
+
+            orderService -> messageBus "Publikuje 'order_created'" "RabbitMQ"
+            paymentService -> messageBus "Publikuje 'payment_status_changed'" "RabbitMQ"
+            staffService -> messageBus "Publikuje 'staff_status_changed'" "RabbitMQ"
+
+            messageBus -> paymentService "Dostarcza 'order_created'" "RabbitMQ"
+            messageBus -> orderService "Dostarcza zdarzenia o zmianie statusu" "RabbitMQ"
+            messageBus -> staffService "Dostarcza zdarzenia o zmianie statusu" "RabbitMQ"
+            messageBus -> notificationService "Dostarcza wszystkie zdarzenia" "RabbitMQ"
         }
-
-        order = container "Order Service" "Zamówienia, sesje stolików, statusy" "FastAPI"
-        kitchen = container "Kitchen Service" "Obsługa zamówień kuchennych" "FastAPI"
-        payment = container "Payment Service" "Integracja z bramkami płatności" "FastAPI"
-        sms = container "SMS Service" "Wysyłanie powiadomień SMS" "FastAPI"
-        email = container "E-mail Service" "Wysyłanie rachunków i e-maili" "FastAPI"
-
-        // --- Kontenery Bazodanowe ---
-        db_auth = container "Auth DB" "Baza danych użytkowników i ról" "PostgreSQL" {
-            tags "Database"
-        }
-        db_orders = container "Orders DB" "Baza danych zamówień" "PostgreSQL" {
-            tags "Database"
-        }
-        db_kitchen = container "Kitchen DB" "Baza danych kuchni" "PostgreSQL" {
-            tags "Database"
-        }
-        db_payment = container "Payment DB" "Logi płatności" "PostgreSQL" {
-            tags "Database"
-        }
-        db_sms = container "SMS DB" "Logi wysłanych SMS-ów" "PostgreSQL" {
-            tags "Database"
-        }
-        db_email = container "Email DB" "Logi wysłanych e-maili" "PostgreSQL" {
-            tags "Database"
-        }
-
-        // --- Relacje MIĘDZY KONTENERAMI (dla widoku Poziomu 2) ---
-
-        // Gateway -> Serwisy
-        gateway -> auth "Rejestracja, logowanie, JWT"
-        gateway -> order "Zarządzanie zamówieniami"
-        gateway -> kitchen "Zamówienia kuchenne"
-        gateway -> payment "Rozpoczyna płatność"
-
-        // Serwis -> Serwis (Backend -> Backend)
-        order -> sms "Informuje o przyjęciu zamówienia"
-        kitchen -> sms "Informuje o gotowym daniu"
-        payment -> sms "Potwierdza płatność"
-        payment -> email "Wysyła rachunek po płatności"
-
-        // Serwis -> Baza danych
-        auth -> db_auth "Czyta/Zapisuje dane uwierzytelniające"
-        order -> db_orders "Czyta/Zapisuje dane zamówień"
-        kitchen -> db_kitchen "Czyta/Zapisuje statusy zamówień kuchennych"
-        sms -> db_sms "Czyta/Zapisuje logi wysłanych SMS-ów"
-        email -> db_email "Czyta/Zapisuje logi wysłanych e-maili"
-        payment -> db_payment "Czyta/Zapisuje logi płatności"
-
-        // --- Relacja KOMPONENT -> KONTENER DB (dla widoku Poziomu 3 - Auth Service) ---
-        system.auth.dbAdapter -> system.db_auth "Wykonuje operacje CRUD na tabeli 'users'" "SQLAlchemy"
-
-        // Serwis -> Zewnętrzne systemy
-        sms -> sms_gateway "Wysyła dane do powiadomień"
-        email -> email_gateway "Wysyła dane do rachunków"
-        payment -> payment_gateway "Wysyła dane do płatności"
     }
 
-    // --- Relacje przechodzące przez granicę systemu ---
+    clientDevice = softwareSystem "Przeglądarka / Aplikacja" "Interfejs użytkownika." "SoftwareSystemExternal"
+    paymentGateway = softwareSystem "PayU" "Zewnętrzny system do przetwarzania płatności." "SoftwareSystemExternal"
+    notificationGateway = softwareSystem "AWS SNS" "Zewnętrzna usługa do wysyłania powiadomień." "SoftwareSystemExternal"
 
-    // Relacja dla widoku kontekstu (Poziom 1)
-    user -> system "Używa systemu do składania zamówień, zarządzania, etc."
-
-    // Relacja Użytkownik -> Gateway (dla widoku Poziomu 2)
-    user -> system.gateway "Wysyła żądania API (REST)"
-
-    // Relacja Gateway -> Komponent (dla widoku Poziomu 3 - Auth Service)
-    system.gateway -> system.auth.routers "Przekazuje żądania HTTP do obsługi przez FastAPI Users"
+    client -> clientDevice "Używa"
+    staff -> clientDevice "Używa"
+    clientDevice -> orderingSystem "Wysyła żądania API" "HTTPS/JSON"
+    orderingSystem -> paymentGateway "Przetwarza płatności" "HTTPS/JSON"
+    paymentGateway -> orderingSystem "Odbiera powiadomienia" "Webhook"
+    orderingSystem -> notificationGateway "Wysyła powiadomienia" "HTTPS/JSON"
+    notificationGateway -> client "Dostarcza powiadomienie" "SMS"
 }

@@ -3,6 +3,14 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
+    # Database settings
+    DB_HOST: str
+    DB_NAME: str
+    DB_USER: str
+    DB_PASSWORD: str
+    DB_PORT: str
+    PAYMENT_SERVICE_DB_SCHEMA: str
+
     # RabbitMQ
     RABBITMQ_URL: str
     PAYMENT_QUEUE: str

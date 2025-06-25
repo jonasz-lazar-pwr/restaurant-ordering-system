@@ -3,24 +3,34 @@
 """Database dependency injection utilities for FastAPI routes.
 
 Provides asynchronous database session management using SQLAlchemy.
+
+The session is committed if the operation succeeds, or rolled back
+and closed in case of an exception. This ensures transactional safety
+within FastAPI request scopes.
 """
 
-from api.db.session import async_session
-from sqlalchemy.ext.asyncio import AsyncSession
 from collections.abc import AsyncGenerator
+from sqlalchemy.ext.asyncio import AsyncSession
+from api.db.session import async_session
 
-from contextlib import asynccontextmanager
 
-@asynccontextmanager
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """Yield an asynchronous database session.
+    """
+    Yield a new asynchronous database session.
 
-    This dependency is used in FastAPI routes to provide access
-    to the database within a request scope. The session is
-    automatically closed after the request is completed.
+    This dependency manages the session lifecycle for a single request.
+    It automatically commits the transaction if the request is successful,
+    or rolls it back if an exception occurs.
 
     Yields:
         AsyncSession: A SQLAlchemy asynchronous database session.
     """
     async with async_session() as session:
-        yield session
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()

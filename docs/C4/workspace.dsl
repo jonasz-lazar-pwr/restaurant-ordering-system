@@ -1,7 +1,8 @@
 // workspace.dsl
 
-workspace "System Zamówień w Restauracji" "Model C4 dla Systemu Zamówień" {
-    !identifiers hierarchical
+workspace "System Zamawiania Jedzenia w Restauracji" "System oparty na mikroserwisach do zarządzania zamówieniami w restauracji" {
+
     !include model.dsl
     !include views.dsl
+
 }

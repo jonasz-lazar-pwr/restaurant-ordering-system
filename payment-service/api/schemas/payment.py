@@ -6,7 +6,7 @@ Defines models for product details, buyer information, and request payloads
 for creating and refunding orders via the PayU API.
 """
 
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
@@ -47,3 +47,8 @@ class CreateRefundRequest(BaseModel):
 
     description: str = Field(..., description="Reason or description for the refund.")
     currencyCode: str = Field(..., description="Currency code for the refund (e.g., 'PLN').")
+
+class PaymentLinkOut(BaseModel):
+    """Response schema containing the payment link."""
+    order_id: int = Field(..., description="Internal ID of the order.")
+    payment_link: Optional[str] = Field(None, description="URL for the customer to complete payment.")
