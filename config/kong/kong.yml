@@ -1,0 +1,131 @@
+_format_version: "3.0"
+_transform: true
+
+consumers:
+  - username: frontend-user
+    jwt_secrets:
+      - key: auth-service
+        secret: xbfwxdmvq(=bi-kwt@8+2lzr9zu_iin%h_iviq6h@hguypn%hg
+        algorithm: HS256
+
+services:
+  - name: auth-service
+    url: http://auth-service:8002
+    routes:
+      # Public route for health check
+      - name: auth-health-route
+        paths:
+          - /auth/health
+        strip_path: false
+
+      # Public route for registration
+      - name: auth-register-route
+        paths:
+          - /auth/register
+        strip_path: false
+
+      # Public route for login
+      - name: auth-login-route
+        paths:
+          - /auth/jwt/login
+        strip_path: false
+
+      # All other /auth paths require JWT
+      - name: auth-protected-route
+        paths:
+          - /auth
+        strip_path: false
+        plugins:
+          - name: jwt
+            config:
+              claims_to_verify:
+                - exp
+              key_claim_name: iss
+              secret_is_base64: false
+
+  - name: order-service
+    url: http://order-service:8003
+    routes:
+      # Public route for health check
+      - name: order-health-route
+        paths:
+          - /order/health
+        strip_path: false
+
+      # All other /order paths require JWT
+      - name: order-protected-route
+        paths:
+          - /order
+        strip_path: false
+        plugins:
+          - name: jwt
+            config:
+              claims_to_verify:
+                - exp
+              key_claim_name: iss
+              secret_is_base64: false
+
+  - name: staff-service
+    url: http://staff-service:8004
+    routes:
+      # Public route for health check
+      - name: staff-health-route
+        paths:
+          - /staff/health
+        strip_path: false
+
+      # All other /staff paths require JWT
+      - name: staff-protected-route
+        paths:
+          - /staff
+        strip_path: false
+        plugins:
+          - name: jwt
+            config:
+              claims_to_verify:
+                - exp
+              key_claim_name: iss
+              secret_is_base64: false
+
+  - name: payment-service
+    url: http://payment-service:8005
+    routes:
+      # Public route for health check
+      - name: payment-health-route
+        paths:
+          - /payment/health
+        strip_path: false
+
+      # All other /payment paths require JWT
+      - name: payment-route
+        paths:
+          - /payment
+        strip_path: false
+        plugins:
+          - name: jwt
+            config:
+              claims_to_verify:
+                - exp
+              key_claim_name: iss
+              secret_is_base64: false
+
+  - name: notification-service
+    url: http://notification-service:8006
+    routes:
+      # Public route for health check
+      - name: notification-health-route
+        paths:
+          - /notification/health
+        strip_path: false
+
+      - name: notification-route
+        paths:
+          - /notification
+        strip_path: false
+        plugins:
+          - name: jwt
+            config:
+              claims_to_verify:
+                - exp
+              key_claim_name: iss
+              secret_is_base64: false

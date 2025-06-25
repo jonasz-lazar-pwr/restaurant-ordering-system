@@ -1,0 +1,114 @@
+# =========================
+# General
+# =========================
+.DS_Store
+*.log
+*.env
+.env*
+README.md
+
+# =========================
+# Git / VCS
+# =========================
+.git
+.gitignore
+
+# =========================
+# Python bytecode / cache
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.py,cover
+.pytest_cache/
+.pytype/
+.mypy_cache/
+.dmypy.json
+cython_debug/
+
+# =========================
+# Python tooling / testing
+# =========================
+.coverage
+.coverage.*
+.cache
+.tox/
+.nox/
+nosetests.xml
+coverage.xml
+*.cover
+htmlcov/
+tests/
+test/
+scripts/
+postman/
+
+# =========================
+# Python packaging
+# =========================
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+develop-eggs/
+downloads/
+sdist/
+var/
+wheels/
+share/python-wheels/
+.installed.cfg
+MANIFEST
+
+# =========================
+# Python environments
+# =========================
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+__pypackages__/
+
+# =========================
+# PyInstaller
+# =========================
+*.manifest
+*.spec
+
+# =========================
+# Docs / mkdocs / Sphinx
+# =========================
+/site
+docs/_build/
+
+# =========================
+# Editors / IDEs
+# =========================
+.idea/
+.vscode/
+.spyderproject
+.spyproject
+.ropeproject
+.pybuilder/
+target/
+.ipynb_checkpoints
+profile_default/
+ipython_config.py
+
+# =========================
+# Misc
+# =========================
+.Python
+.pypirc
+pip-log.txt
+pip-delete-this-directory.txt
+celerybeat-schedule
+celerybeat.pid
+**/.aws
+**/.ssh
+./postgres-data

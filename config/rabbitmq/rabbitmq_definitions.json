@@ -1,0 +1,26 @@
+{
+  "users": [
+    {
+      "name": "admin",
+      "password_hash": "FTsPCxJLXWCQeRmnQx4WXQ0nQRaT90dVNYF5Ydmd/Q7WYeJ+",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": "administrator"
+    }
+  ],
+  "vhosts": [{ "name": "/" }],
+  "permissions": [
+    {
+      "user": "admin",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "queues": [
+    { "name": "order_service_queue", "vhost": "/", "durable": true },
+    { "name": "staff_service_queue", "vhost": "/", "durable": true },
+    { "name": "payment_service_queue", "vhost": "/", "durable": true },
+    { "name": "notification_service_queue", "vhost": "/", "durable": true }
+  ]
+}

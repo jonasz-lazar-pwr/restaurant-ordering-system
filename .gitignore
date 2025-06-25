@@ -108,7 +108,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
+config/.env
 .venv
 env/
 venv/
@@ -294,3 +294,15 @@ cmake-build-*/
 .idea_modules/
 atlassian-ide-plugin.xml
 .idea/replstate.xml
+
+# Structurizr local cache and settings
+.structurizr/
+auth-service/.dockerignore
+auth-service/api/core/config.py
+
+*.pem
+.terraform/
+*.hcl
+*.tfstate
+*.tfstate.backup
+*.tfvars
