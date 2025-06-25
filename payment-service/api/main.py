@@ -24,6 +24,7 @@ async def lifespan(app: FastAPI):
     yield
     print("Shutting down payment-service...")
     payment_consumer_task.cancel()
+    refund_consumer_task.cancel()
 
 # Initialize FastAPI app
 app = FastAPI(

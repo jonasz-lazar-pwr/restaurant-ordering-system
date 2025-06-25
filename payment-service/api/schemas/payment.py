@@ -27,17 +27,19 @@ class Buyer(BaseModel):
     lastName: str = Field(..., alias="lastName", description="Buyer's last name.")
     language: str = Field(..., description="Language code (e.g., 'pl').")
 
-
 class CreatePaymentRequest(BaseModel):
     """Request schema for creating a payment order."""
 
+    notifyUrl: str = Field(..., description="Notification URL for order status updates.")
+    customerIp: str = Field(..., description="Customer's IP address.")
     description: str = Field(..., description="Description of the order.")
     currencyCode: str = Field(..., description="Currency code (e.g., 'PLN').")
     totalAmount: str = Field(..., description="Total amount of the order in minor currency unit (e.g., grosze).")
-    products: List[Product] = Field(..., description="List of products in the order.")
     buyer: Buyer = Field(..., description="Information about the buyer.")
-    customerIp: str = Field(..., description="Customer's IP address.")
-    notifyUrl: str = Field(..., description="Notification URL for order status updates.")
+    products: List[Product] = Field(..., description="List of products in the order.")
+    orderId: str = Field(..., description="ID corresponding to order in order-service.")
+    tableNumber: str = Field(..., description="Number of the table from which the order was made.")
+    userId: str = Field(..., description="Customer's unique ID.")
 
 
 class CreateRefundRequest(BaseModel):

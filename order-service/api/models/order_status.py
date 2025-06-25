@@ -17,6 +17,7 @@ class OrderStatus(enum.Enum):
         delivered (str): Order has been delivered to the customer.
         cancelled (str): Order was cancelled (by user or kitchen).
         failed (str): Order processing failed (e.g., payment issues).
+        refunded (str): Order has been paid and later refunded.
     """
     pending = "pending"
     paid = "paid"

@@ -26,10 +26,16 @@ class OrderRequest(BaseModel):
     payment_method: PaymentMethod = Field(..., description="Chosen payment method.")
 
 
+# class OrderResponse(BaseModel):
+#     """Response after placing a new order."""
+#     message: str = Field(..., description="Success message including table number and email.")
+#     order_id: int = Field(..., description="ID of the newly created order.")
+
 class OrderResponse(BaseModel):
     """Response after placing a new order."""
     message: str = Field(..., description="Confirmation that the order has been received.")
     order_id: int = Field(..., description="ID of the newly created order.")
+    payment_redirect_uri: str | None = Field(None, description="URL to redirect the user for payment, if applicable.")
 
 
 class OrderSummary(BaseModel):
