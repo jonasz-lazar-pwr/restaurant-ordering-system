@@ -2,18 +2,31 @@
 
 """Entry point for the Staff Service."""
 
+import asyncio
+from api.workers.consumer import start_staff_consumer
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from api.core.middleware import add_middleware
 from api.routes.order import router as orders_router
 
+consumer_task = None
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI):
-    print("Starting up Staff Service...")
+async def lifespan(app: FastAPI):
+    """Handle startup and shutdown events."""
+    global consumer_task
+    print("Starting staff-service...")
+    consumer_task = asyncio.create_task(start_staff_consumer())
     yield
-    print("Shutting down Staff Service...")
+    print("Shutting down staff-service...")
+    if consumer_task:
+        consumer_task.cancel()
+        try:
+            await consumer_task
+        except asyncio.CancelledError:
+            print("Staff consumer task cancelled.")
 
 
 app = FastAPI(

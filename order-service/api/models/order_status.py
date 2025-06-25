@@ -25,3 +25,4 @@ class OrderStatus(enum.Enum):
     delivered = "delivered"
     cancelled = "cancelled"
     failed = "failed"
+    refunded = "refunded"

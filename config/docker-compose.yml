@@ -19,8 +19,6 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
-#      Username: admin
-#      Password: admin
     volumes:
       - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
       - ./rabbitmq/rabbitmq_definitions.json:/etc/rabbitmq/definitions.json
@@ -42,8 +40,8 @@ services:
       KONG_ADMIN_ERROR_LOG: /dev/stderr
       KONG_ADMIN_LISTEN: 0.0.0.0:8001
     ports:
-      - "${KONG_GATEWAY_PORT}:${KONG_GATEWAY_PORT}"               # publiczny HTTP
-      - "${KONG_GATEWAY_ADMIN_PORT}:${KONG_GATEWAY_ADMIN_PORT}"   # admin API
+      - "${KONG_GATEWAY_PORT}:${KONG_GATEWAY_PORT}"
+      - "${KONG_GATEWAY_ADMIN_PORT}:${KONG_GATEWAY_ADMIN_PORT}"
     volumes:
       - ./kong/kong.yml:/kong/declarative/kong.yml
 
@@ -89,6 +87,8 @@ services:
       rabbitmq:
         condition: service_healthy
       kong:
+        condition: service_started
+      payment-service:
         condition: service_started
 
   staff-service:

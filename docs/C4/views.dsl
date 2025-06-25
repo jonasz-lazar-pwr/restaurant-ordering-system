@@ -1,27 +1,75 @@
 // views.dsl
 
 views {
-    // --- Widok Kontekstu Systemu (Poziom 1) ---
-    systemContext system "SystemContext" "Diagram kontekstowy (Poziom 1) pokazujący interakcje Systemu Zamówień w Restauracji z użytkownikami i systemami zewnętrznymi." {
-        // Include all top-level elements (people, software systems)
+    systemContext orderingSystem "SystemContext" "Diagram Kontekstu Systemu dla Systemu Zamawiania Jedzenia." {
         include *
-        description "Diagram Kontekstowy C4 - Poziom 1"
+        autolayout lr
     }
 
-    // --- Widok Kontenerów (Poziom 2) ---
-    container system "Containers" "Diagram kontenerów (Poziom 2) pokazujący główne bloki budujące System Zamówień w Restauracji." {
-        // Include everything by default for a container view (people, external systems, internal containers)
+    container orderingSystem "Containers" "Diagram Kontenerów dla Systemu Zamawiania Jedzenia." {
         include *
-        description "Diagram Kontenerów C4 - Poziom 2"
+        autolayout lr
     }
 
-    // --- Widok Komponentów dla Auth Service (Poziom 3) ---
-    component system.auth "AuthComponents" "Diagram komponentów (Poziom 3) dla Usługi Autoryzacyjnej (Auth Service)." {
-        // Include all components within auth service, plus connected elements (gateway, db_auth)
+    component authService "AuthServiceComponents" "Diagram Komponentów dla Auth Service." {
         include *
-        description "Diagram Komponentów C4 - Poziom 3 (Auth Service)"
+        autolayout lr
     }
 
-    // Dołączanie stylów
-    !include styles.dsl
+    component orderService "OrderServiceComponents" "Diagram Komponentów dla Order Service." {
+        include *
+        autolayout lr
+    }
+
+    component paymentService "PaymentServiceComponents" "Diagram Komponentów dla Payment Service." {
+        include *
+        autolayout lr
+    }
+
+    component staffService "StaffServiceComponents" "Diagram Komponentów dla Staff Service." {
+        include *
+        autolayout lr
+    }
+
+    component notificationService "NotificationServiceComponents" "Diagram Komponentów dla Notification Service." {
+        include *
+        autolayout lr
+    }
+
+    styles {
+        element "Person" {
+            shape Person
+            background #08427b
+            color #ffffff
+        }
+        element "SoftwareSystemInternal" {
+            background #1168bd
+            color #ffffff
+        }
+        element "SoftwareSystemExternal" {
+            background #999999
+            color #ffffff
+        }
+        element "Container" {
+            background #438dd5
+            color #ffffff
+        }
+        element "Gateway" {
+            shape WebBrowser
+        }
+        element "Database" {
+            shape Cylinder
+            background #ff0000
+        }
+        element "MessageBus" {
+            shape Pipe
+            background #ff6600
+        }
+        element "Component" {
+            background #85bbf0
+            color #000000
+        }
+    }
+
+    theme default
 }
